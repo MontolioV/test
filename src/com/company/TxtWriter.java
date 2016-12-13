@@ -4,14 +4,16 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Created by main on 10.12.2016.
+ * Class to output results (reports) to txt.
+ * <p>
+ * Created by MontolioV on 10.12.2016.
  */
 class TxtWriter {
     private final String CYCLE_WORD;
     private final List<String> KEY_WORDS;
     private BufferedWriter buffer;
 
-    public TxtWriter(String CYCLE_WORD, List<String> KEY_WORDS) {
+    TxtWriter(String CYCLE_WORD, List<String> KEY_WORDS) {
         this.CYCLE_WORD = CYCLE_WORD;
         this.KEY_WORDS = KEY_WORDS;
         try {
@@ -22,27 +24,32 @@ class TxtWriter {
         }
     }
 
-     void write_to_txt (ArrayList<Hashtable<String,String>> arl) {
-         String tmpS;
-         tmpS = CYCLE_WORD + "\t";
-         for (String s: KEY_WORDS) {
-             tmpS += s + "\t";
-         }
-         send_to_buff(tmpS);
-         for (Hashtable<String,String> ht: arl) {
-             tmpS = ht.get(CYCLE_WORD)+ "\t";
-             for (String s: KEY_WORDS) {
-                 tmpS += ht.get(s) + "\t";
-             }
-             send_to_buff(tmpS);
-         }
-         try {
-             buffer.close();
-         } catch (IOException e) {
-             System.out.println("buffer.close() fails");
-             e.printStackTrace();
-         }
-     }
+    /**
+     * The method to output results data to txt.
+     * <p>Txt report may be easily transformed in electronic table (excel, libre/open calc) by tabs.
+     * @param arl data structure to convert to report.
+     */
+    void write_to_txt (ArrayList<Hashtable<String,String>> arl) {
+        String tmpS;
+        tmpS = CYCLE_WORD + "\t";
+        for (String s: KEY_WORDS) {
+            tmpS += s + "\t";
+        }
+        send_to_buff(tmpS);
+        for (Hashtable<String,String> ht: arl) {
+            tmpS = ht.get(CYCLE_WORD)+ "\t";
+            for (String s: KEY_WORDS) {
+                tmpS += ht.get(s) + "\t";
+            }
+            send_to_buff(tmpS);
+        }
+        try {
+            buffer.close();
+        } catch (IOException e) {
+            System.out.println("buffer.close() fails");
+            e.printStackTrace();
+        }
+    }
 
     private void send_to_buff(String s) {
         try {

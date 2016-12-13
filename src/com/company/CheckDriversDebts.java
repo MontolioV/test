@@ -4,7 +4,8 @@ import java.util.Arrays;
 import java.util.Hashtable;
 
 /**
- * Checks set to leave
+ * Checks set to leave the invoices that must be on hand and yet are not.
+ * <p>Will work only if necessary for analysis columns (KW) are in list.
  * <p>
  * Created by MontolioV on 10.12.2016.
  */

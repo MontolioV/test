@@ -3,7 +3,9 @@ package com.company;
 import java.util.Hashtable;
 
 /**
- * Created by main on 10.12.2016.
+ * Use to output all data without filtration.
+ * <p>
+ * Created by MontolioV on 10.12.2016.
  */
 class CheckDisabled implements Check {
 

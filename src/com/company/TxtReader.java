@@ -2,7 +2,9 @@ package com.company;
 import java.util.*;
 import java.io.*;
 /**
- * Created by main on 10.12.2016.
+ * Class to output AX report (.txt) and parse strings to logic parts.
+ * <p>
+ * Created by MontolioV on 10.12.2016.
  */
 
 class TxtReader {
@@ -15,7 +17,7 @@ class TxtReader {
         try {
             String s = this.buffer.readLine();
             if (s != null){
-                if (s.endsWith("\t")) { //To prevent last data cell lost, if it was empty
+                if (s.endsWith("\t")) {                 /* To prevent last data cell lost, if it was empty */
                     s = s + "\tend";
                 }
                 return Arrays.asList(s.split("\t"));
