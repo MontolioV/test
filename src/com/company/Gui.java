@@ -40,7 +40,7 @@ public class Gui {
         //kwList.setSelectionMode();
 
         scrollPane = new JScrollPane(kwList);
-        scrollPane.setMaximumSize(new Dimension(300,120));
+        scrollPane.setMaximumSize(new Dimension(300,320));
         fieldsBox.add(scrollPane);
 
         background.add(BorderLayout.CENTER, fieldsBox);
@@ -61,6 +61,9 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
+            long stT = System.currentTimeMillis();
+
+
             String nameAndFr;
             DefaultListModel<String> defListModel = new DefaultListModel<String>();
 
@@ -72,6 +75,8 @@ public class Gui {
                 defListModel.addElement(nameAndFr);
             }
             kwList.setModel(defListModel);
+
+            System.out.println(String.valueOf((double) (System.currentTimeMillis() - stT) / 1000) + " sec");
         }
 
         private ArrayList<KeyWordWithFrequency> findKWs() {
@@ -85,17 +90,22 @@ public class Gui {
                 for (int i = 0; i < 20; i++) {
                     tmpSal = new ArrayList<String>();
                     List<String> from_txt = tr.get_from_txt();
+
                     if (from_txt == null) {
                         break;
                     }
+
                     tmpSal.addAll(from_txt);
                     for (String s : tmpSal) {
                         if (!strPull.add(s)) {
                             KeyWordWithFrequency tmpfrKW = new KeyWordWithFrequency(s);
-                            if (possibleKWs.contains(tmpfrKW)) {
-                                possibleKWs.get(possibleKWs.indexOf(tmpfrKW)).riseFrequ();
-                            } else {
+                            int index;
+
+                            index = possibleKWs.indexOf(tmpfrKW);
+                            if (index < 0) {
                                 possibleKWs.add(tmpfrKW);
+                            } else {
+                                possibleKWs.get(index).riseFrequ();
                             }
                         }
                     }
