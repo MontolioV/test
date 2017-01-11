@@ -11,45 +11,60 @@ import java.util.List;
  * Created by user on 20.12.16.
  */
 public class Gui {
-    JFrame fr = new JFrame("test");
-    JButton b1 = new JButton("b1");
-    JButton b2 = new JButton("b222222222222222");
-    JComboBox cwCombo = new JComboBox();
-    JList kwList = new JList();
-    GridLayout mainGrid = new GridLayout(1,2);
-    JPanel mainPanel = new JPanel(mainGrid);
-    Box buttonBox = new Box(BoxLayout.Y_AXIS);
-    Box fieldsBox = new Box(BoxLayout.Y_AXIS);
-    JScrollPane scrollPane;
+    private JFrame fr = new JFrame("test");
+    private JPanel background;
+    private JPanel fieldsPanel;
+    private Box buttonBox = new Box(BoxLayout.Y_AXIS);
+    private ArrayList<JComboBox> updCB = new ArrayList<JComboBox>();
 
 
-    void go() {
+    public Gui() {
         BorderLayout bl = new BorderLayout();
-        JPanel background = new JPanel(bl);
+        background = new JPanel(bl);
         background.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-        mainGrid.setHgap(5);
-        mainGrid.setVgap(5);
+//        background = new JPanel();
 
+        GridLayout fieldsGrid = new GridLayout(2, 2);
+        fieldsGrid.setHgap(5);
+        fieldsGrid.setVgap(5);
+        fieldsPanel = new JPanel(fieldsGrid);
+
+        JButton b1 = new JButton("b1");
         b1.addActionListener(new FinderListener());
         buttonBox.add(b1);
 
-        cwCombo.setEditable(true);
-        cwCombo.setMaximumSize(new Dimension(300,20));
-        fieldsBox.add(cwCombo);
+        addField("Маркер цикла");
+        addField();
 
-        //kwList.setSelectionMode();
-
-        scrollPane = new JScrollPane(kwList);
-        scrollPane.setMaximumSize(new Dimension(300,320));
-        fieldsBox.add(scrollPane);
-
-        background.add(BorderLayout.CENTER, fieldsBox);
+        background.add(BorderLayout.CENTER, fieldsPanel);
         background.add(BorderLayout.EAST, buttonBox);
 
         fr.getContentPane().add(background);
         fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        fr.setBounds(50,50,600,600);
+        fr.setBounds(150,150,800,800);
         fr.setVisible(true);
+    }
+
+    private JLabel addField() {
+        JLabel defaultLabel = new JLabel("Ключевая фраза");
+        JComboBox defaultComboBox = new JComboBoxWithPresetSize();
+        GridLayout grid = (GridLayout) fieldsPanel.getLayout();
+
+        defaultComboBox.setEditable(true);
+        updCB.add(defaultComboBox);
+
+        if (grid.getRows() < updCB.size()) {
+            grid.setRows(grid.getRows() + 1);
+        }
+
+        fieldsPanel.add(defaultLabel);
+        fieldsPanel.add(defaultComboBox);
+        return defaultLabel;
+    }
+
+    private void addField(String labelText) {
+        JLabel defaultLabel = this.addField();
+        defaultLabel.setText(labelText);
     }
 
     class FinderListener implements ActionListener {
@@ -61,22 +76,15 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
-            long stT = System.currentTimeMillis();
+            ArrayList<KeyWordWithFrequency> frKWs = findKWs();
 
-
-            String nameAndFr;
-            DefaultListModel<String> defListModel = new DefaultListModel<String>();
-
-            cwCombo.removeAllItems();
-            kwList.removeAll();
-            for (KeyWordWithFrequency frKW : findKWs()) {
-                nameAndFr = frKW.getName() + " (x" + frKW.getFrequ() + ")";
-                cwCombo.addItem(nameAndFr);
-                defListModel.addElement(nameAndFr);
+            for (JComboBox cb : updCB) {
+                cb.removeAllItems();
+                cb.addItem("");
+                for (KeyWordWithFrequency kw : frKWs) {
+                    cb.addItem(kw.getName());
+                }
             }
-            kwList.setModel(defListModel);
-
-            System.out.println(String.valueOf((double) (System.currentTimeMillis() - stT) / 1000) + " sec");
         }
 
         private ArrayList<KeyWordWithFrequency> findKWs() {
@@ -85,6 +93,7 @@ public class Gui {
             ArrayList<String> tmpSal;
             TxtReader tr;
             try {
+                //XXX
                 tr = new TxtReader("09.txt");
 
                 for (int i = 0; i < 20; i++) {
@@ -97,7 +106,7 @@ public class Gui {
 
                     tmpSal.addAll(from_txt);
                     for (String s : tmpSal) {
-                        if (!strPull.add(s)) {
+                        if ((!strPull.add(s)) && (!s.isEmpty())) {
                             KeyWordWithFrequency tmpfrKW = new KeyWordWithFrequency(s);
                             int index;
 
@@ -248,5 +257,33 @@ class KWFrequencyComparator implements Comparator<KeyWordWithFrequency> {
     @Override
     public int compare(KeyWordWithFrequency o1, KeyWordWithFrequency o2) {
         return (o1.getFrequ() - o2.getFrequ());
+    }
+}
+
+class JComboBoxWithPresetSize<E> extends JComboBox<E> {
+    public JComboBoxWithPresetSize(ComboBoxModel<E> aModel) {
+        super(aModel);
+        myPresetSize();
+    }
+
+    public JComboBoxWithPresetSize(E[] items) {
+        super(items);
+        myPresetSize();
+    }
+
+    public JComboBoxWithPresetSize(Vector<E> items) {
+        super(items);
+        myPresetSize();
+    }
+
+    public JComboBoxWithPresetSize() {
+        super();
+        myPresetSize();
+    }
+
+    private void myPresetSize() {
+        super.setMinimumSize(new Dimension(300, 20));
+        super.setMaximumSize(new Dimension(300, 20));
+        super.setPreferredSize(new Dimension(300, 20));
     }
 }
