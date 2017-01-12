@@ -16,13 +16,13 @@ public class Gui {
     private JPanel fieldsPanel;
     private Box buttonBox = new Box(BoxLayout.Y_AXIS);
     private ArrayList<JComboBox> updCB = new ArrayList<JComboBox>();
-
+    private ArrayList<KeyWordWithFrequency> frKWs;
 
     public Gui() {
         BorderLayout bl = new BorderLayout();
-        background = new JPanel(bl);
-        background.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-//        background = new JPanel();
+//        background = new JPanel(bl);
+//        background.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        background = new JPanel();
 
         GridLayout fieldsGrid = new GridLayout(2, 2);
         fieldsGrid.setHgap(5);
@@ -41,21 +41,29 @@ public class Gui {
 
         fr.getContentPane().add(background);
         fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        fr.setBounds(150,150,800,800);
+        fr.setBounds(150,150,700,700);
         fr.setVisible(true);
     }
 
     private JLabel addField() {
         JLabel defaultLabel = new JLabel("Ключевая фраза");
-        JComboBox defaultComboBox = new JComboBoxWithPresetSize();
+        JComboBox<String> defaultComboBox = new JComboBoxPreset();
         GridLayout grid = (GridLayout) fieldsPanel.getLayout();
 
         defaultComboBox.setEditable(true);
         updCB.add(defaultComboBox);
 
+        if (frKWs != null) {
+            for (KeyWordWithFrequency kw : frKWs) {
+                defaultComboBox.addItem(kw.getName());
+            }
+        }
+
         if (grid.getRows() < updCB.size()) {
             grid.setRows(grid.getRows() + 1);
         }
+
+        defaultComboBox.addActionListener(new NoEmptyFieldsActListener());
 
         fieldsPanel.add(defaultLabel);
         fieldsPanel.add(defaultComboBox);
@@ -76,15 +84,16 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
-            ArrayList<KeyWordWithFrequency> frKWs = findKWs();
+            frKWs = findKWs();
 
             for (JComboBox cb : updCB) {
                 cb.removeAllItems();
-                cb.addItem("");
                 for (KeyWordWithFrequency kw : frKWs) {
                     cb.addItem(kw.getName());
                 }
             }
+
+            fr.revalidate();
         }
 
         private ArrayList<KeyWordWithFrequency> findKWs() {
@@ -120,7 +129,10 @@ public class Gui {
                     }
                 }
 
-                Collections.sort(possibleKWs, Collections.reverseOrder(new KWFrequencyComparator()));
+                Collections.sort(possibleKWs, new KWFrequencyComparator());
+
+                possibleKWs.add(new KeyWordWithFrequency(""));
+                Collections.reverse(possibleKWs);
 
                 tr.close_buffer();
             } catch (FileNotFoundException e1) {
@@ -129,6 +141,27 @@ public class Gui {
             return possibleKWs;
         }
     }
+
+    class NoEmptyFieldsActListener implements ActionListener {
+        /**
+         * Invoked when an action occurs.
+         *
+         * @param e
+         */
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (updCB.isEmpty()) {
+                addField();
+            } else if (updCB.get(updCB.size() - 1).getSelectedItem() == null) {
+
+            } else if (!(updCB.get(updCB.size() - 1).getSelectedItem().equals(""))) {
+                addField();
+            }
+
+            fr.revalidate();
+        }
+    }
+
 
 }
 
@@ -260,24 +293,28 @@ class KWFrequencyComparator implements Comparator<KeyWordWithFrequency> {
     }
 }
 
-class JComboBoxWithPresetSize<E> extends JComboBox<E> {
-    public JComboBoxWithPresetSize(ComboBoxModel<E> aModel) {
+class JComboBoxPreset<E> extends JComboBox<E> {
+    public JComboBoxPreset(ComboBoxModel<E> aModel) {
         super(aModel);
-        myPresetSize();
+        myPreset();
     }
 
-    public JComboBoxWithPresetSize(E[] items) {
+    public JComboBoxPreset(E[] items) {
         super(items);
-        myPresetSize();
+        myPreset();
     }
 
-    public JComboBoxWithPresetSize(Vector<E> items) {
+    public JComboBoxPreset(Vector<E> items) {
         super(items);
-        myPresetSize();
+        myPreset();
     }
 
-    public JComboBoxWithPresetSize() {
+    public JComboBoxPreset() {
         super();
+        myPreset();
+    }
+
+    private void myPreset() {
         myPresetSize();
     }
 
@@ -286,4 +323,5 @@ class JComboBoxWithPresetSize<E> extends JComboBox<E> {
         super.setMaximumSize(new Dimension(300, 20));
         super.setPreferredSize(new Dimension(300, 20));
     }
+
 }
