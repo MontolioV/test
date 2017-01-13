@@ -21,10 +21,10 @@ public class Gui {
     private ArrayList<KeyWordWithFrequency> frKWs;
 
     public Gui() {
-        BorderLayout bl = new BorderLayout();
-//        background = new JPanel(bl);
-//        background.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-        background = new JPanel();
+        BorderLayout bl = new BorderLayout(10,10);
+        background = new JPanel(bl);
+        background.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+//        background = new JPanel();
 
         GridLayout fieldsGrid = new GridLayout(2, 2);
         fieldsGrid.setHgap(5);
@@ -38,8 +38,9 @@ public class Gui {
         addField("Маркер цикла");
         addField();
 
-        background.add(BorderLayout.CENTER, fieldsPanel);
-        background.add(BorderLayout.EAST, buttonBox);
+        background.add(fieldsPanel, BorderLayout.CENTER);
+        background.add(buttonBox, BorderLayout.LINE_END);
+
 
         fr.getContentPane().add(background);
         fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
