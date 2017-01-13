@@ -54,9 +54,9 @@ class DataWH {
         if (list.contains(CYCLE_WORD)){
             cwValue = list.get(list.indexOf(CYCLE_WORD)+1);     /* Next string after CW is CW value */
         }
-        for (int i = 0; i < list.size(); i = i + 2) {           /* Even strings (and 0) are KWs */
+        for (int i = 0; i < list.size(); i += 2) {           /* Even strings (and 0) are KWs */
             if (KEY_WORDS.contains(list.get(i))) {              /* Odd strings are KW values */
-                tmpHt.put(list.get(i),list.get(i+1));           /* Need to extract only KW values */
+                tmpHt.put(list.get(i), list.get(i + 1));           /* Need to extract only KW values */
             }
         }
         return true;

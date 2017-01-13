@@ -32,13 +32,13 @@ class TxtWriter {
     void write_to_txt (ArrayList<Hashtable<String,String>> arl) {
         String tmpS;
         tmpS = CYCLE_WORD + "\t";
-        for (String s: KEY_WORDS) {
+        for (String s : KEY_WORDS) {
             tmpS += s + "\t";
         }
         send_to_buff(tmpS);
-        for (Hashtable<String,String> ht: arl) {
-            tmpS = ht.get(CYCLE_WORD)+ "\t";
-            for (String s: KEY_WORDS) {
+        for (Hashtable<String, String> ht : arl) {
+            tmpS = ht.get(CYCLE_WORD) + "\t";
+            for (String s : KEY_WORDS) {
                 tmpS += ht.get(s) + "\t";
             }
             send_to_buff(tmpS);

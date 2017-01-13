@@ -8,7 +8,9 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Created by user on 20.12.16.
+ * GUI object.
+ * <p>
+ * Created by MontolioV on 20.12.16.
  */
 public class Gui {
     private JFrame fr = new JFrame("test");
@@ -115,11 +117,9 @@ public class Gui {
 
                     tmpSal.addAll(from_txt);
                     for (String s : tmpSal) {
-                        if ((!strPull.add(s)) && (!s.isEmpty())) {
+                        if ((!s.isEmpty()) && (!strPull.add(s))) {
                             KeyWordWithFrequency tmpfrKW = new KeyWordWithFrequency(s);
-                            int index;
-
-                            index = possibleKWs.indexOf(tmpfrKW);
+                            int index = possibleKWs.indexOf(tmpfrKW);
                             if (index < 0) {
                                 possibleKWs.add(tmpfrKW);
                             } else {
@@ -150,11 +150,8 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (updCB.isEmpty()) {
-                addField();
-            } else if (updCB.get(updCB.size() - 1).getSelectedItem() == null) {
-
-            } else if (!(updCB.get(updCB.size() - 1).getSelectedItem().equals(""))) {
+            String s = (String) updCB.get(updCB.size() - 1).getSelectedItem();
+            if ((s != null) && (!s.equals(""))) {
                 addField();
             }
 
@@ -165,6 +162,12 @@ public class Gui {
 
 }
 
+/**
+ * Object for store string with a counter of frequency.
+ * <p>Comparable by String <tt>name</tt>.
+ * <p>
+ * Created by MontolioV on 10.01.17.
+ */
 class KeyWordWithFrequency implements Comparable<KeyWordWithFrequency> {
     private String name;
     private int frequ = 0;
@@ -245,6 +248,11 @@ class KeyWordWithFrequency implements Comparable<KeyWordWithFrequency> {
     }
 }
 
+/**
+ * Comparator for {@link KeyWordWithFrequency} to compare it by frequency of appiarence.
+ * <p>
+ * Created by MontolioV on 10.01.17.
+ */
 class KWFrequencyComparator implements Comparator<KeyWordWithFrequency> {
 
     /**
@@ -293,6 +301,11 @@ class KWFrequencyComparator implements Comparator<KeyWordWithFrequency> {
     }
 }
 
+/**
+ * JComboBox with fixed size.
+ * <p>
+ * Created by MontolioV on 10.01.17.
+ */
 class JComboBoxPreset<E> extends JComboBox<E> {
     public JComboBoxPreset(ComboBoxModel<E> aModel) {
         super(aModel);
