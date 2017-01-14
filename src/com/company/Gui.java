@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 import java.util.List;
 
@@ -16,7 +17,6 @@ public class Gui {
     private JFrame fr = new JFrame("test");
     private JPanel background;
     private JPanel fieldsPanel;
-    private Box buttonBox = new Box(BoxLayout.Y_AXIS);
     private ArrayList<JComboBox> updCB = new ArrayList<JComboBox>();
     private ArrayList<KeyWordWithFrequency> frKWs;
 
@@ -31,16 +31,14 @@ public class Gui {
         fieldsGrid.setVgap(5);
         fieldsPanel = new JPanel(fieldsGrid);
 
-        JButton b1 = new JButton("b1");
-        b1.addActionListener(new FinderListener());
-        buttonBox.add(b1);
+        JButton chooseFileBut = new JButton("Выбрать файл");
+        chooseFileBut.addActionListener(new FileChooseListener());
 
-        addField("Маркер цикла");
-        addField();
+        this.addField("Маркер цикла");
+        this.addField();
 
+        background.add(chooseFileBut, BorderLayout.PAGE_START);
         background.add(fieldsPanel, BorderLayout.CENTER);
-        background.add(buttonBox, BorderLayout.LINE_END);
-
 
         fr.getContentPane().add(background);
         fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -78,16 +76,20 @@ public class Gui {
         defaultLabel.setText(labelText);
     }
 
-    class FinderListener implements ActionListener {
-
-        /**
-         * Invoked when an action occurs.
-         *
-         * @param e
-         */
+    class FileChooseListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            frKWs = findKWs();
+            Path currentDir = Paths.get("").toAbsolutePath();
+            JFileChooser fileChooser = new JFileChooser(currentDir.toFile());
+            int response = fileChooser.showDialog(null, null);
+
+            if (response == JFileChooser.APPROVE_OPTION) {
+                fillGuiFromFile(fileChooser.getSelectedFile());
+            }
+        }
+
+        private void fillGuiFromFile(File file) {
+            frKWs = findKWs(file);
 
             for (JComboBox cb : updCB) {
                 cb.removeAllItems();
@@ -99,16 +101,15 @@ public class Gui {
             fr.revalidate();
         }
 
-        private ArrayList<KeyWordWithFrequency> findKWs() {
+        private ArrayList<KeyWordWithFrequency> findKWs(File file) {
             HashSet<String> strPull = new HashSet<String>();
             ArrayList<KeyWordWithFrequency> possibleKWs = new ArrayList<KeyWordWithFrequency>();
             ArrayList<String> tmpSal;
             TxtReader tr;
             try {
-                //XXX
-                tr = new TxtReader("09.txt");
+                tr = new TxtReader(file);
 
-                for (int i = 0; i < 20; i++) {
+                for (int i = 0; i < 50; i++) {
                     tmpSal = new ArrayList<String>();
                     List<String> from_txt = tr.get_from_txt();
 

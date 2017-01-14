@@ -31,6 +31,7 @@ class DataWH {
             while (unfinished){
                 unfinished = makeHT(reader.get_from_txt());
             }
+//            for (boolean hasNext = makeHT(reader.get_from_txt()); hasNext; hasNext = makeHT(reader.get_from_txt()));
             reader.close_buffer();
 
             System.out.println(STORAGE.size());

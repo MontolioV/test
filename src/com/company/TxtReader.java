@@ -10,9 +10,14 @@ import java.io.*;
 class TxtReader {
     private BufferedReader buffer = null;
 
-    TxtReader (String file_name) throws FileNotFoundException{
+    public TxtReader(String file_name) throws FileNotFoundException {
         this.buffer = new BufferedReader(new FileReader(file_name));
     }
+
+    public TxtReader(File file) throws FileNotFoundException {
+        this.buffer = new BufferedReader(new FileReader(file));
+    }
+
     List<String> get_from_txt() {
         try {
             String s = this.buffer.readLine();
