@@ -21,24 +21,35 @@ public class Gui {
     private ArrayList<KeyWordWithFrequency> frKWs;
 
     public Gui() {
-        BorderLayout bl = new BorderLayout(10,10);
-        background = new JPanel(bl);
-        background.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-//        background = new JPanel();
+//        BorderLayout bl = new BorderLayout(10,10);
+//        background = new JPanel(bl);
+        GridBagLayout gridbag = new GridBagLayout();
+        background = new JPanel(gridbag);
+//        background.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
         GridLayout fieldsGrid = new GridLayout(2, 2);
         fieldsGrid.setHgap(5);
         fieldsGrid.setVgap(5);
         fieldsPanel = new JPanel(fieldsGrid);
 
-        JButton chooseFileBut = new JButton("Выбрать файл");
+        JButton chooseFileBut = new JButton("Выбрать текстовый файл " + "(в кодировке " + System.getProperty("file.encoding") + ")");
         chooseFileBut.addActionListener(new FileChooseListener());
 
         this.addField("Маркер цикла");
         this.addField();
 
-        background.add(chooseFileBut, BorderLayout.PAGE_START);
-        background.add(fieldsPanel, BorderLayout.CENTER);
+//        background.add(chooseFileBut, BorderLayout.PAGE_START);
+//        background.add(fieldsPanel, BorderLayout.CENTER);
+        Insets inset5hor10vert= new Insets(0,0,0,0);
+        GridBagConstraints headerGBCons = new GridBagConstraints(0,0,3,1,1,0,GridBagConstraints.FIRST_LINE_START,GridBagConstraints.BOTH,inset5hor10vert,0,20);
+        background.add(chooseFileBut, headerGBCons);
+
+        GridBagConstraints fieldsGBCons = new GridBagConstraints(1,1,2,1,1,1,GridBagConstraints.FIRST_LINE_START,GridBagConstraints.HORIZONTAL,inset5hor10vert,0,0);
+        background.add(fieldsPanel, fieldsGBCons);
+
+        JLabel testLabel = new JLabel("test");
+        GridBagConstraints labelGBCons = new GridBagConstraints(0,1,1,2,0,0.7,GridBagConstraints.FIRST_LINE_START,GridBagConstraints.VERTICAL,inset5hor10vert,100,0);
+        background.add(testLabel, labelGBCons);
 
         fr.getContentPane().add(background);
         fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
