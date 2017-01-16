@@ -23,7 +23,7 @@ class DataWH {
     }
     void parse(String file_name){
         try{
-            chk = new CheckDriversDebts();
+            chk = new CheckDisabled();
             TxtWriter writer = new TxtWriter(CYCLE_WORD, KEY_WORDS);
             TxtReader reader = new TxtReader(file_name);
             boolean unfinished = true;
@@ -31,7 +31,6 @@ class DataWH {
             while (unfinished){
                 unfinished = makeHT(reader.get_from_txt());
             }
-//            for (boolean hasNext = makeHT(reader.get_from_txt()); hasNext; hasNext = makeHT(reader.get_from_txt()));
             reader.close_buffer();
 
             System.out.println(STORAGE.size());

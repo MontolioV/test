@@ -184,12 +184,14 @@ public class Gui {
                 String s = (String) comboB.getSelectedItem();
                 if (cw == null) {
                     cw = s;
-                } else {
+                } else if (!s.equals("")){
                     kws.add(s);
                 }
             }
 
-            DataWH dwh = new DataWH(cw, sArr);
+            System.out.println(cw);
+            System.out.println(kws.toString());
+            DataWH dwh = new DataWH(cw, kws.toArray(new String[0]));
             dwh.parse(fileNameAbsolute);
         }
     }
