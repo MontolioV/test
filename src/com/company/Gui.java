@@ -17,50 +17,54 @@ public class Gui {
     private JFrame fr = new JFrame("test");
     private JPanel background;
     private JPanel fieldsPanel;
-    private ArrayList<JComboBox> updCB = new ArrayList<JComboBox>();
+    private ArrayList<JComboBox<String>> updCB = new ArrayList<JComboBox<String>>();
     private ArrayList<KeyWordWithFrequency> frKWs;
+    private String fileNameAbsolute;
 
     public Gui() {
-//        BorderLayout bl = new BorderLayout(10,10);
-//        background = new JPanel(bl);
         GridBagLayout gridbag = new GridBagLayout();
         background = new JPanel(gridbag);
-//        background.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-
-        GridLayout fieldsGrid = new GridLayout(2, 2);
-        fieldsGrid.setHgap(5);
-        fieldsGrid.setVgap(5);
-        fieldsPanel = new JPanel(fieldsGrid);
 
         JButton chooseFileBut = new JButton("Выбрать текстовый файл " + "(в кодировке " + System.getProperty("file.encoding") + ")");
         chooseFileBut.addActionListener(new FileChooseListener());
 
-        this.addField("Маркер цикла");
+        fieldsPanel = new JPanel(new GridBagLayout());
+        this.addField("Маркер цикла", 1);
         this.addField();
 
-//        background.add(chooseFileBut, BorderLayout.PAGE_START);
-//        background.add(fieldsPanel, BorderLayout.CENTER);
-        Insets inset5hor10vert= new Insets(0,0,0,0);
-        GridBagConstraints headerGBCons = new GridBagConstraints(0,0,3,1,1,0,GridBagConstraints.FIRST_LINE_START,GridBagConstraints.BOTH,inset5hor10vert,0,20);
+        JButton goParseButton = new JButton("Пуск!");
+        goParseButton.addActionListener(new GoParseActionListener());
+
+        GridBagConstraints headerGBCons = new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 0,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 0), 0, 20);
         background.add(chooseFileBut, headerGBCons);
 
-        GridBagConstraints fieldsGBCons = new GridBagConstraints(1,1,2,1,1,1,GridBagConstraints.FIRST_LINE_START,GridBagConstraints.HORIZONTAL,inset5hor10vert,0,0);
+        GridBagConstraints fieldsGBCons = new GridBagConstraints(0, 2, 1, 1, 0, 1,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 10, 20), 0, 0);
         background.add(fieldsPanel, fieldsGBCons);
 
-        JLabel testLabel = new JLabel("test");
-        GridBagConstraints labelGBCons = new GridBagConstraints(0,1,1,2,0,0.7,GridBagConstraints.FIRST_LINE_START,GridBagConstraints.VERTICAL,inset5hor10vert,100,0);
-        background.add(testLabel, labelGBCons);
+        GridBagConstraints labelGBCons = new GridBagConstraints(0, 3, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
+                GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 200, 20);
+        background.add(goParseButton, labelGBCons);
 
         fr.getContentPane().add(background);
         fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        fr.setBounds(150,150,700,700);
+        fr.setBounds(200, 150, 700, 500);
         fr.setVisible(true);
     }
 
-    private JLabel addField() {
-        JLabel defaultLabel = new JLabel("Ключевая фраза");
-        JComboBox<String> defaultComboBox = new JComboBoxPreset();
-        GridLayout grid = (GridLayout) fieldsPanel.getLayout();
+    private void addField() {
+        this.addField("Ключевая фраза", updCB.size() + 2);
+    }
+
+    private void addField(String labelText, int gridY) {
+        JLabel defaultLabel = new JLabel(labelText);
+        JComboBox<String> defaultComboBox = new JComboBoxPreset<>();
+
+        GridBagConstraints lableConstraints = new GridBagConstraints(1, gridY, 1, 1, 0, 0,
+                GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 10, 3, 20), 0, 0);
+        GridBagConstraints comboBoxConstraints = new GridBagConstraints(2, gridY, 1, 1, 0, 0,
+                GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 0), 0, 0);
 
         defaultComboBox.setEditable(true);
         updCB.add(defaultComboBox);
@@ -71,20 +75,10 @@ public class Gui {
             }
         }
 
-        if (grid.getRows() < updCB.size()) {
-            grid.setRows(grid.getRows() + 1);
-        }
-
         defaultComboBox.addActionListener(new NoEmptyFieldsActListener());
 
-        fieldsPanel.add(defaultLabel);
-        fieldsPanel.add(defaultComboBox);
-        return defaultLabel;
-    }
-
-    private void addField(String labelText) {
-        JLabel defaultLabel = this.addField();
-        defaultLabel.setText(labelText);
+        fieldsPanel.add(defaultLabel,lableConstraints);
+        fieldsPanel.add(defaultComboBox,comboBoxConstraints);
     }
 
     class FileChooseListener implements ActionListener {
@@ -96,13 +90,14 @@ public class Gui {
 
             if (response == JFileChooser.APPROVE_OPTION) {
                 fillGuiFromFile(fileChooser.getSelectedFile());
+                fileNameAbsolute = fileChooser.getSelectedFile().toString();
             }
         }
 
         private void fillGuiFromFile(File file) {
             frKWs = findKWs(file);
 
-            for (JComboBox cb : updCB) {
+            for (JComboBox<String> cb : updCB) {
                 cb.removeAllItems();
                 for (KeyWordWithFrequency kw : frKWs) {
                     cb.addItem(kw.getName());
@@ -163,16 +158,41 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
-            String s = (String) updCB.get(updCB.size() - 1).getSelectedItem();
-            if ((s != null) && (!s.equals(""))) {
-                addField();
-            }
+//            if (updCB.size() < 10) {
+                String s = (String) updCB.get(updCB.size() - 1).getSelectedItem();
+                if ((s != null) && (!s.equals(""))) {
+                    addField();
+                }
 
-            fr.revalidate();
+                fr.revalidate();
+//            }
         }
     }
 
+    class GoParseActionListener implements ActionListener {
+        /**
+         * Invoked when an action occurs.
+         *
+         * @param e
+         */
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String cw = null;
+            ArrayList<String> kws = new ArrayList<String>();
 
+            for (JComboBox<String> comboB : updCB) {
+                String s = (String) comboB.getSelectedItem();
+                if (cw == null) {
+                    cw = s;
+                } else {
+                    kws.add(s);
+                }
+            }
+
+            DataWH dwh = new DataWH(cw, sArr);
+            dwh.parse(fileNameAbsolute);
+        }
+    }
 }
 
 /**
@@ -345,9 +365,9 @@ class JComboBoxPreset<E> extends JComboBox<E> {
     }
 
     private void myPresetSize() {
-        super.setMinimumSize(new Dimension(300, 20));
-        super.setMaximumSize(new Dimension(300, 20));
-        super.setPreferredSize(new Dimension(300, 20));
+        super.setMinimumSize(new Dimension(200, 20));
+        super.setMaximumSize(new Dimension(200, 20));
+        super.setPreferredSize(new Dimension(200, 20));
     }
 
 }
