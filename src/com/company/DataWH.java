@@ -29,7 +29,7 @@ class DataWH {
             boolean unfinished = true;
 
             while (unfinished){
-                unfinished = makeHT(reader.get_from_txt());
+                unfinished = makeHT(reader.getListFromTxt());
             }
             reader.close_buffer();
 

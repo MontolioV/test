@@ -16,6 +16,7 @@ import java.util.List;
 public class Gui {
     private JFrame fr = new JFrame("test");
     private JPanel background;
+    private JTextArea preview = new JTextArea();
     private JPanel fieldsPanel;
     private ArrayList<JComboBox<String>> updCB = new ArrayList<JComboBox<String>>();
     private ArrayList<KeyWordWithFrequency> frKWs;
@@ -32,6 +33,8 @@ public class Gui {
         this.addField("Маркер цикла", 1);
         this.addField();
 
+        preview.setEditable(false);
+
         JButton goParseButton = new JButton("Пуск!");
         goParseButton.addActionListener(new GoParseActionListener());
 
@@ -43,9 +46,13 @@ public class Gui {
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 10, 20), 0, 0);
         background.add(fieldsPanel, fieldsGBCons);
 
-        GridBagConstraints labelGBCons = new GridBagConstraints(0, 3, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
+        GridBagConstraints previewCons = new GridBagConstraints(1, 2, 1, 1, 1, 1,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 20), 0, 0);
+        background.add(new JScrollPane(preview), previewCons);
+
+        GridBagConstraints goParseButCons = new GridBagConstraints(0, 3, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
                 GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 200, 20);
-        background.add(goParseButton, labelGBCons);
+        background.add(goParseButton, goParseButCons);
 
         fr.getContentPane().add(background);
         fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -81,6 +88,37 @@ public class Gui {
         fieldsPanel.add(defaultComboBox,comboBoxConstraints);
     }
 
+    private void makePreview(File file) {
+        BufferedReader bReader = null;
+        preview.setText(null);
+        String ending = "И так далее...";
+
+        try {
+            bReader = new BufferedReader(new FileReader(file));
+            for (int i = 0; i < 15; i++) {
+                String s = bReader.readLine();
+                if (s == null) {
+                    ending = "Конец.";
+                    break;
+                }
+                preview.append(s + "\n");
+            }
+            preview.append("\n" + ending);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.out.println("Файл не найден. Превью не заполнено.");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("При заполнении превью возникло исключение.");
+        }finally {
+            try {
+                bReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     class FileChooseListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -95,6 +133,7 @@ public class Gui {
         }
 
         private void fillGuiFromFile(File file) {
+            makePreview(file);
             frKWs = findKWs(file);
 
             for (JComboBox<String> cb : updCB) {
@@ -117,7 +156,7 @@ public class Gui {
 
                 for (int i = 0; i < 50; i++) {
                     tmpSal = new ArrayList<String>();
-                    List<String> from_txt = tr.get_from_txt();
+                    List<String> from_txt = tr.getListFromTxt();
 
                     if (from_txt == null) {
                         break;
@@ -191,8 +230,13 @@ public class Gui {
 
             System.out.println(cw);
             System.out.println(kws.toString());
+
+            long time = System.currentTimeMillis();
             DataWH dwh = new DataWH(cw, kws.toArray(new String[0]));
             dwh.parse(fileNameAbsolute);
+            System.out.println(((double) (System.currentTimeMillis() - time) / 1000) + " sec");
+
+            makePreview(new File("Отчет.txt"));
         }
     }
 }
@@ -203,7 +247,7 @@ public class Gui {
  * <p>
  * Created by MontolioV on 10.01.17.
  */
-class KeyWordWithFrequency implements Comparable<KeyWordWithFrequency> {
+class KeyWordWithFrequency implements Comparable<KeyWordWithFrequency>, Serializable {
     private String name;
     private int frequ = 0;
 
