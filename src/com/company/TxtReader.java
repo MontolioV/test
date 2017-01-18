@@ -18,14 +18,23 @@ class TxtReader {
         this.buffer = new BufferedReader(new FileReader(file));
     }
 
-    List<String> get_from_txt() {
+    List<String> getListFromTxt() {
+        String[] sArr = getArrayFromTxt();
+        if (sArr != null) {
+            return Arrays.asList(sArr);
+        } else {
+            return null;
+        }
+    }
+
+    String[] getArrayFromTxt() {
         try {
             String s = this.buffer.readLine();
             if (s != null){
                 if (s.endsWith("\t")) {                 /* To prevent last data cell lost, if it was empty */
                     s = s + "\tend";
                 }
-                return Arrays.asList(s.split("\t"));
+                return s.split("\t");
             }else {
                 return null;
             }
@@ -35,6 +44,7 @@ class TxtReader {
             return null;
         }
     }
+
     void close_buffer(){
         try {
             if (this.buffer != null) {
