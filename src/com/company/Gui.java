@@ -1,6 +1,7 @@
 package com.company;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -23,17 +24,19 @@ public class Gui {
     private String fileNameAbsolute;
 
     public Gui() {
-        GridBagLayout gridbag = new GridBagLayout();
-        background = new JPanel(gridbag);
+        background = new JPanel(new GridBagLayout());
 
         JButton chooseFileBut = new JButton("Выбрать текстовый файл " + "(в кодировке " + System.getProperty("file.encoding") + ")");
-        chooseFileBut.addActionListener(new FileChooseListener());
+        chooseFileBut.addActionListener(new FileChooseOpenListener());
 
         fieldsPanel = new JPanel(new GridBagLayout());
         this.addField("Маркер цикла", 1);
         this.addField();
 
         preview.setEditable(false);
+
+        JButton saveButton = new JButton("Save");
+        saveButton.addActionListener(new SaveListener());
 
         JButton goParseButton = new JButton("Пуск!");
         goParseButton.addActionListener(new GoParseActionListener());
@@ -50,9 +53,14 @@ public class Gui {
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 20), 0, 0);
         background.add(new JScrollPane(preview), previewCons);
 
-        GridBagConstraints goParseButCons = new GridBagConstraints(0, 3, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
+        GridBagConstraints goParseButCons = new GridBagConstraints(0, 4, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
                 GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 200, 20);
         background.add(goParseButton, goParseButCons);
+
+        GridBagConstraints saveCons = new GridBagConstraints(0, 3, GridBagConstraints.REMAINDER, 1, 0, 0,
+                GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 200, 20);
+        background.add(saveButton, saveCons);
+
 
         fr.getContentPane().add(background);
         fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -119,12 +127,14 @@ public class Gui {
         }
     }
 
-    class FileChooseListener implements ActionListener {
+    class FileChooseOpenListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             Path currentDir = Paths.get("").toAbsolutePath();
             JFileChooser fileChooser = new JFileChooser(currentDir.toFile());
-            int response = fileChooser.showDialog(null, null);
+            fileChooser.setFileFilter(new FileNameExtensionFilter(".txt","txt"));
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            int response = fileChooser.showDialog(fr, null);
 
             if (response == JFileChooser.APPROVE_OPTION) {
                 fillGuiFromFile(fileChooser.getSelectedFile());
@@ -188,6 +198,55 @@ public class Gui {
             return possibleKWs;
         }
     }
+
+    class SaveListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Path saveDir = Paths.get("","Saves").toAbsolutePath();
+            if (!saveDir.toFile().exists()) {
+                if (!saveDir.toFile().mkdir()) {
+                    System.out.println("Не удалось создать папку Saves");
+                }
+            }
+
+            JFileChooser fileChooser = new JFileChooser(saveDir.toFile());
+            fileChooser.setFileFilter(new FileNameExtensionFilter(".ser","ser"));
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            int response = fileChooser.showDialog(fr, "Save");
+
+            if (response == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                if (!selectedFile.toString().endsWith(".ser")) {
+                    selectedFile = new File(selectedFile.toString() + ".ser");
+                }
+                serialiseEnteredValues(selectedFile);
+            }
+
+        }
+
+        private void serialiseEnteredValues(File saveFile) {
+            ObjectOutputStream objOutputStream = null;
+            try {
+                objOutputStream = new ObjectOutputStream(new FileOutputStream(saveFile));
+
+                objOutputStream.writeObject(fieldsPanel);
+                objOutputStream.writeObject(updCB);
+                objOutputStream.writeObject(frKWs);
+                objOutputStream.writeObject(fileNameAbsolute);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Сериализация провалилась. Не удалось сохранить настройки в файл.");
+            } finally {
+                try {
+                    objOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.out.println("Не удалось закрыть поток сериализации.");
+                }
+            }
+        }
+}
 
     class NoEmptyFieldsActListener implements ActionListener {
         /**
