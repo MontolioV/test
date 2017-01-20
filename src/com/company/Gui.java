@@ -16,6 +16,7 @@ import java.util.List;
  */
 public class Gui {
     private JFrame fr = new JFrame("test");
+    private JMenuBar menuBar = new JMenuBar();;
     private JPanel background;
     private JTextArea preview = new JTextArea();
     private JPanel fieldsPanel;
@@ -24,19 +25,25 @@ public class Gui {
     private String fileNameAbsolute;
 
     public Gui() {
+        JMenu mainMenu = new JMenu("Файл");
+        JMenuItem menuSaveButton = new JMenuItem("Сохранить");
+        JMenuItem menuLoadButton = new JMenuItem("Загрузить");
+        menuSaveButton.addActionListener(new SaveListener());
+        menuLoadButton.addActionListener(new LoadListener());
+        mainMenu.add(menuSaveButton);
+        mainMenu.add(menuLoadButton);
+        menuBar.add(mainMenu);
+
         background = new JPanel(new GridBagLayout());
 
         JButton chooseFileBut = new JButton("Выбрать текстовый файл " + "(в кодировке " + System.getProperty("file.encoding") + ")");
-        chooseFileBut.addActionListener(new FileChooseOpenListener());
+        chooseFileBut.addActionListener(new OpenListener());
 
         fieldsPanel = new JPanel(new GridBagLayout());
         this.addField("Маркер цикла", 1);
         this.addField();
 
         preview.setEditable(false);
-
-        JButton saveButton = new JButton("Save");
-        saveButton.addActionListener(new SaveListener());
 
         JButton goParseButton = new JButton("Пуск!");
         goParseButton.addActionListener(new GoParseActionListener());
@@ -57,15 +64,25 @@ public class Gui {
                 GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 200, 20);
         background.add(goParseButton, goParseButCons);
 
-        GridBagConstraints saveCons = new GridBagConstraints(0, 3, GridBagConstraints.REMAINDER, 1, 0, 0,
-                GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 200, 20);
-        background.add(saveButton, saveCons);
-
-
+        fr.setJMenuBar(menuBar);
         fr.getContentPane().add(background);
         fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         fr.setBounds(200, 150, 700, 500);
         fr.setVisible(true);
+    }
+
+    private void fillGuiFromFile(File file) {
+        makePreview(file);
+        frKWs = findKWs(file);
+
+        for (JComboBox<String> cb : updCB) {
+            cb.removeAllItems();
+            for (KeyWordWithFrequency kw : frKWs) {
+                cb.addItem(kw.getName());
+            }
+        }
+
+        fr.revalidate();
     }
 
     private void addField() {
@@ -127,7 +144,64 @@ public class Gui {
         }
     }
 
-    class FileChooseOpenListener implements ActionListener {
+    private ArrayList<KeyWordWithFrequency> findKWs(File file) {
+        HashSet<String> strPull = new HashSet<String>();
+        ArrayList<KeyWordWithFrequency> possibleKWs = new ArrayList<KeyWordWithFrequency>();
+        ArrayList<String> tmpSal;
+        TxtReader tr;
+        try {
+            tr = new TxtReader(file);
+
+            for (int i = 0; i < 50; i++) {
+                tmpSal = new ArrayList<String>();
+                List<String> from_txt = tr.getListFromTxt();
+
+                if (from_txt == null) {
+                    break;
+                }
+
+                tmpSal.addAll(from_txt);
+                for (String s : tmpSal) {
+                    if ((!s.isEmpty()) && (!strPull.add(s))) {
+                        KeyWordWithFrequency tmpfrKW = new KeyWordWithFrequency(s);
+                        int index = possibleKWs.indexOf(tmpfrKW);
+                        if (index < 0) {
+                            possibleKWs.add(tmpfrKW);
+                        } else {
+                            possibleKWs.get(index).riseFrequ();
+                        }
+                    }
+                }
+            }
+
+            Collections.sort(possibleKWs, new KWFrequencyComparator());
+
+            possibleKWs.add(new KeyWordWithFrequency(""));
+            Collections.reverse(possibleKWs);
+
+            tr.close_buffer();
+        } catch (FileNotFoundException e1) {
+            e1.printStackTrace();
+        }
+        return possibleKWs;
+    }
+
+    private JFileChooser makeSerialisFChooser() {
+        Path saveDir = Paths.get("","Saves").toAbsolutePath();
+        if (!saveDir.toFile().exists()) {
+            if (!saveDir.toFile().mkdir()) {
+                System.out.println("Не удалось создать папку Saves");
+            }
+        }
+
+        JFileChooser fileChooser = new JFileChooser(saveDir.toFile());
+        fileChooser.setFileFilter(new FileNameExtensionFilter(".ser","ser"));
+        fileChooser.setAcceptAllFileFilterUsed(false);
+
+        return fileChooser;
+    }
+
+    private class OpenListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             Path currentDir = Paths.get("").toAbsolutePath();
@@ -137,81 +211,20 @@ public class Gui {
             int response = fileChooser.showDialog(fr, null);
 
             if (response == JFileChooser.APPROVE_OPTION) {
-                fillGuiFromFile(fileChooser.getSelectedFile());
-                fileNameAbsolute = fileChooser.getSelectedFile().toString();
-            }
-        }
-
-        private void fillGuiFromFile(File file) {
-            makePreview(file);
-            frKWs = findKWs(file);
-
-            for (JComboBox<String> cb : updCB) {
-                cb.removeAllItems();
-                for (KeyWordWithFrequency kw : frKWs) {
-                    cb.addItem(kw.getName());
+                if (fileChooser.getSelectedFile().exists()) {
+                    fillGuiFromFile(fileChooser.getSelectedFile());
+                    fileNameAbsolute = fileChooser.getSelectedFile().toString();
+                } else {
+                    System.out.println("Нет такого файла!");
                 }
             }
-
-            fr.revalidate();
-        }
-
-        private ArrayList<KeyWordWithFrequency> findKWs(File file) {
-            HashSet<String> strPull = new HashSet<String>();
-            ArrayList<KeyWordWithFrequency> possibleKWs = new ArrayList<KeyWordWithFrequency>();
-            ArrayList<String> tmpSal;
-            TxtReader tr;
-            try {
-                tr = new TxtReader(file);
-
-                for (int i = 0; i < 50; i++) {
-                    tmpSal = new ArrayList<String>();
-                    List<String> from_txt = tr.getListFromTxt();
-
-                    if (from_txt == null) {
-                        break;
-                    }
-
-                    tmpSal.addAll(from_txt);
-                    for (String s : tmpSal) {
-                        if ((!s.isEmpty()) && (!strPull.add(s))) {
-                            KeyWordWithFrequency tmpfrKW = new KeyWordWithFrequency(s);
-                            int index = possibleKWs.indexOf(tmpfrKW);
-                            if (index < 0) {
-                                possibleKWs.add(tmpfrKW);
-                            } else {
-                                possibleKWs.get(index).riseFrequ();
-                            }
-                        }
-                    }
-                }
-
-                Collections.sort(possibleKWs, new KWFrequencyComparator());
-
-                possibleKWs.add(new KeyWordWithFrequency(""));
-                Collections.reverse(possibleKWs);
-
-                tr.close_buffer();
-            } catch (FileNotFoundException e1) {
-                e1.printStackTrace();
-            }
-            return possibleKWs;
         }
     }
 
-    class SaveListener implements ActionListener {
+    private class SaveListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            Path saveDir = Paths.get("","Saves").toAbsolutePath();
-            if (!saveDir.toFile().exists()) {
-                if (!saveDir.toFile().mkdir()) {
-                    System.out.println("Не удалось создать папку Saves");
-                }
-            }
-
-            JFileChooser fileChooser = new JFileChooser(saveDir.toFile());
-            fileChooser.setFileFilter(new FileNameExtensionFilter(".ser","ser"));
-            fileChooser.setAcceptAllFileFilterUsed(false);
+            JFileChooser fileChooser = makeSerialisFChooser();
             int response = fileChooser.showDialog(fr, "Save");
 
             if (response == JFileChooser.APPROVE_OPTION) {
@@ -229,10 +242,14 @@ public class Gui {
             try {
                 objOutputStream = new ObjectOutputStream(new FileOutputStream(saveFile));
 
-                objOutputStream.writeObject(fieldsPanel);
-                objOutputStream.writeObject(updCB);
+                ArrayList selectedVal = new ArrayList();
+                for (JComboBox cb : updCB) {
+                    selectedVal.add(cb.getSelectedItem());
+                }
+
                 objOutputStream.writeObject(frKWs);
                 objOutputStream.writeObject(fileNameAbsolute);
+                objOutputStream.writeObject(selectedVal);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -246,9 +263,73 @@ public class Gui {
                 }
             }
         }
-}
+    }
 
-    class NoEmptyFieldsActListener implements ActionListener {
+    private class LoadListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFileChooser fileChooser = makeSerialisFChooser();
+            int response = fileChooser.showDialog(fr, "Load");
+
+            if (response == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                if (!selectedFile.toString().endsWith(".ser")) {
+                    selectedFile = new File(selectedFile.toString() + ".ser");
+                }
+                if (selectedFile.exists()) {
+                    deserialise(selectedFile);
+                } else {
+                    System.out.println("Нет такого файла. Невозможно загрузить.");
+                }
+
+            }
+        }
+
+        private void deserialise(File file) {
+            ObjectInputStream objInputStream = null;
+            try {
+                objInputStream = new ObjectInputStream(new FileInputStream(file));
+
+                frKWs = (ArrayList<KeyWordWithFrequency>) objInputStream.readObject();
+                fileNameAbsolute = (String) objInputStream.readObject();
+                ArrayList selectedVal = (ArrayList) objInputStream.readObject();
+
+                File restoredFile = new File(fileNameAbsolute);
+                if (restoredFile.exists()) {
+                    fillGuiFromFile(restoredFile);
+                } else {
+                    System.out.println("Не получилось найти старый файл при загрузке.");
+                }
+
+                //Restore selected items in comboboxes
+                if (updCB.size() < selectedVal.size()) {
+                    int fieldsToAdd = selectedVal.size() - updCB.size();
+                    for (int i = 0; i < fieldsToAdd; i++) {
+                        addField();
+                    }
+                }
+                for (int i = 0; i < (selectedVal.size() - 1); i++) {
+                    updCB.get(i).setSelectedItem(selectedVal.get(i));
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Сериализация провалилась. Не удалось загрузить настройки из файла.");
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } finally {
+                fr.revalidate();
+                try {
+                    objInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.out.println("Не удалось закрыть поток сериализации.");
+                }
+            }
+        }
+    }
+
+    private class NoEmptyFieldsActListener implements ActionListener {
         /**
          * Invoked when an action occurs.
          *
@@ -267,7 +348,7 @@ public class Gui {
         }
     }
 
-    class GoParseActionListener implements ActionListener {
+    private class GoParseActionListener implements ActionListener {
         /**
          * Invoked when an action occurs.
          *
@@ -287,15 +368,21 @@ public class Gui {
                 }
             }
 
-            System.out.println(cw);
-            System.out.println(kws.toString());
+            System.out.println("\n" + "Cycle word:" + cw);
+            System.out.println("Keywords:" + kws.toString());
 
-            long time = System.currentTimeMillis();
-            DataWH dwh = new DataWH(cw, kws.toArray(new String[0]));
-            dwh.parse(fileNameAbsolute);
-            System.out.println(((double) (System.currentTimeMillis() - time) / 1000) + " sec");
+            if (cw == null || cw.equals("")) {
+                System.out.println("Нельзя парсить без маркера цикла!");
+            } else if (kws.isEmpty()) {
+                System.out.println("Выберите по крайней мере одно ключевое слово.");
+            } else {
+                long time = System.currentTimeMillis();
+                DataWH dwh = new DataWH(cw, kws.toArray(new String[0]));
+                dwh.parse(fileNameAbsolute);
+                System.out.println(((double) (System.currentTimeMillis() - time) / 1000) + " sec");
 
-            makePreview(new File("Отчет.txt"));
+                makePreview(new File("Отчет.txt"));
+            }
         }
     }
 }
