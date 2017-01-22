@@ -33,7 +33,7 @@ class DataWH {
             }
             reader.close_buffer();
 
-            System.out.println(STORAGE.size());
+            System.out.println("Generated strings: " + "\t" + STORAGE.size());
             writer.write_to_txt(STORAGE);
         } catch (FileNotFoundException e) {
             System.out.println("Указанный файл не найден!");
