@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -65,9 +67,11 @@ public class Gui {
         background.add(new JScrollPane(preview), previewCons);
 
         //Progress bar
-        progressBar = new JProgressBar();
-        GridBagConstraints progressBarCons = new GridBagConstraints(0, 3, GridBagConstraints.REMAINDER, 1, 0, 0,
-                GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 0, 0);
+        progressBar = new JProgressBar(0,100);
+        progressBar.setStringPainted(true);
+        progressBar.setVisible(false);
+        GridBagConstraints progressBarCons = new GridBagConstraints(0, 3, 2, 1, 1, 0,
+                GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 20, 20), 0, 10);
         background.add(progressBar, progressBarCons);
 
         //Start button
@@ -387,14 +391,40 @@ public class Gui {
             } else if (kws.isEmpty()) {
                 System.out.println("Выберите по крайней мере одно ключевое слово.");
             } else {
-                long time = System.currentTimeMillis();
-                DataWH dwh = new DataWH(fileNameAbsolute,cw, kws.toArray(new String[0]));
-                dwh.parse();
-                System.out.println(((double) (System.currentTimeMillis() - time) / 1000) + " sec");
+//                long time = System.currentTimeMillis();
+//                DataWH dwh = new DataWH(fileNameAbsolute,cw, kws.toArray(new String[0]));
+//                dwh.parse();
+//                System.out.println(((double) (System.currentTimeMillis() - time) / 1000) + " sec");
 
-                makePreview(new File("Отчет.txt"));
+                DataWH dwh = new DataWH(fileNameAbsolute, cw, kws.toArray(new String[0]));
+                dwh.addPropertyChangeListener(new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent event) {
+                        switch (event.getPropertyName()) {
+                            case "state":
+                                switch ((SwingWorker.StateValue) event.getNewValue()) {
+                                    case PENDING:
+                                        break;
+                                    case STARTED:
+                                        progressBar.setVisible(true);
+                                        break;
+                                    case DONE:
+                                        progressBar.setVisible(false);
+                                        makePreview(new File("Отчет.txt"));
+                                        break;
+                                }
+                                break;
+                            case "progress":
+                                progressBar.setIndeterminate(false);
+                                progressBar.setValue((Integer) event.getNewValue());
+                                break;
+                        }
+                    }
+                });
+                dwh.execute();
             }
         }
+
     }
 }
 

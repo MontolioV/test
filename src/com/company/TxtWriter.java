@@ -18,8 +18,13 @@ class TxtWriter {
         this.KEY_WORDS = KEY_WORDS;
         try {
             this.buffer = new BufferedWriter(new FileWriter(new File("Отчет.txt")));
+            buffer.write(CYCLE_WORD + "\t");
+            for (String s : KEY_WORDS) {
+                buffer.write(s + "\t");
+            }
+            buffer.newLine();
         } catch (IOException e) {
-            System.out.println("Не удалось открыть файл для записи отчета.");
+            System.out.println("Не удалось открыть файл для записи отчета и записать шапку.");
             e.printStackTrace();
         }
     }
@@ -31,11 +36,6 @@ class TxtWriter {
      */
     void write_to_txt (ArrayList<Hashtable<String,String>> arl) {
         String tmpS;
-        tmpS = CYCLE_WORD + "\t";
-        for (String s : KEY_WORDS) {
-            tmpS += s + "\t";
-        }
-        send_to_buff(tmpS);
         for (Hashtable<String, String> ht : arl) {
             tmpS = ht.get(CYCLE_WORD) + "\t";
             for (String s : KEY_WORDS) {
@@ -43,11 +43,19 @@ class TxtWriter {
             }
             send_to_buff(tmpS);
         }
+        close_buffer();
+    }
+
+    void writeLineToTxt(Hashtable<String, String> ht) {
         try {
-            buffer.close();
+            buffer.write(ht.get(CYCLE_WORD) + "\t");
+            for (String s : KEY_WORDS) {
+                buffer.write(ht.get(s) + "\t");
+            }
+            buffer.newLine();
         } catch (IOException e) {
-            System.out.println("buffer.close() fails");
             e.printStackTrace();
+            System.out.println("Не удалось записать строку в файл.");
         }
     }
 
@@ -57,6 +65,17 @@ class TxtWriter {
             buffer.newLine();
         } catch (IOException e) {
             System.out.println("buffer.write(s) fails");
+            e.printStackTrace();
+        }
+    }
+
+    void close_buffer(){
+        try {
+            if (this.buffer != null) {
+                this.buffer.close();
+            }
+        } catch (IOException e) {
+            System.out.println("Buffer close failed");
             e.printStackTrace();
         }
     }
