@@ -23,6 +23,7 @@ public class Gui {
     private ArrayList<JComboBox<String>> updCB = new ArrayList<JComboBox<String>>();
     private ArrayList<KeyWordWithFrequency> frKWs;
     private String fileNameAbsolute;
+    private JProgressBar progressBar;
 
     public Gui() {
         JMenu mainMenu = new JMenu("Файл");
@@ -48,18 +49,28 @@ public class Gui {
         JButton goParseButton = new JButton("Пуск!");
         goParseButton.addActionListener(new GoParseActionListener());
 
+        //ChooseFile
         GridBagConstraints headerGBCons = new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 0,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 0), 0, 20);
         background.add(chooseFileBut, headerGBCons);
 
+        //Fields
         GridBagConstraints fieldsGBCons = new GridBagConstraints(0, 2, 1, 1, 0, 1,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 10, 20), 0, 0);
         background.add(fieldsPanel, fieldsGBCons);
 
+        //Preview
         GridBagConstraints previewCons = new GridBagConstraints(1, 2, 1, 1, 1, 1,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 20), 0, 0);
         background.add(new JScrollPane(preview), previewCons);
 
+        //Progress bar
+        progressBar = new JProgressBar();
+        GridBagConstraints progressBarCons = new GridBagConstraints(0, 3, GridBagConstraints.REMAINDER, 1, 0, 0,
+                GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 0, 0);
+        background.add(progressBar, progressBarCons);
+
+        //Start button
         GridBagConstraints goParseButCons = new GridBagConstraints(0, 4, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
                 GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 200, 20);
         background.add(goParseButton, goParseButCons);
@@ -377,8 +388,8 @@ public class Gui {
                 System.out.println("Выберите по крайней мере одно ключевое слово.");
             } else {
                 long time = System.currentTimeMillis();
-                DataWH dwh = new DataWH(cw, kws.toArray(new String[0]));
-                dwh.parse(fileNameAbsolute);
+                DataWH dwh = new DataWH(fileNameAbsolute,cw, kws.toArray(new String[0]));
+                dwh.parse();
                 System.out.println(((double) (System.currentTimeMillis() - time) / 1000) + " sec");
 
                 makePreview(new File("Отчет.txt"));
@@ -562,4 +573,27 @@ class JComboBoxPreset<E> extends JComboBox<E> {
         super.setPreferredSize(new Dimension(200, 20));
     }
 
+}
+
+class ParseWorker extends SwingWorker<Integer, String> {
+
+
+
+    /**
+     * Computes a result, or throws an exception if unable to do so.
+     * <p>
+     * <p>
+     * Note that this method is executed only once.
+     * <p>
+     * <p>
+     * Note: this method is executed in a background thread.
+     *
+     * @return the computed result
+     * @throws Exception if unable to compute a result
+     */
+    @Override
+    protected Integer doInBackground() throws Exception {
+
+        return null;
+    }
 }

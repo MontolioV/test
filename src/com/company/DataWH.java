@@ -10,6 +10,7 @@ import java.io.*;
  */
 
 class DataWH {
+    private String file_name;
     private final String CYCLE_WORD;
     private String cwValue;
     private final List<String> KEY_WORDS;
@@ -17,11 +18,12 @@ class DataWH {
     private Hashtable<String,String> tmpHt = new Hashtable<>(15);
     private Check chk;
 
-    DataWH(String cw, String [] kws) {
+    DataWH(String file_name, String cw, String [] kws) {
+        this.file_name = file_name;
         this.CYCLE_WORD = cw;
         this.KEY_WORDS = Arrays.asList(kws);
     }
-    void parse(String file_name){
+    void parse(){
         try{
             chk = new CheckDisabled();
             TxtWriter writer = new TxtWriter(CYCLE_WORD, KEY_WORDS);
