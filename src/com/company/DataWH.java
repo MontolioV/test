@@ -12,7 +12,7 @@ import java.io.*;
 
 class DataWH extends SwingWorker<Integer, String> {
     private final String FILE_NAME;
-    private final String CYCLE_WORD;
+    private final List<String> CYCLE_WORDS;
     private final List<String> KEY_WORDS;
     private String currentCWValue;
     private Hashtable<String, String> tmpHt = new Hashtable<>(15);
@@ -24,17 +24,17 @@ class DataWH extends SwingWorker<Integer, String> {
 //    private final ArrayList<Hashtable<String, String>> STORAGE = new ArrayList<>();
 
 
-    DataWH(String file_name, String cw, String[] kws) {
+    DataWH(String file_name, List<String> cws, List<String> kws) {
         this.FILE_NAME = file_name;
-        this.CYCLE_WORD = cw;
-        this.KEY_WORDS = Arrays.asList(kws);
+        this.CYCLE_WORDS = cws;
+        this.KEY_WORDS = kws;
     }
 
     @Override
     protected Integer doInBackground() throws Exception {
         try {
             chk = new CheckDisabled();
-            writer = new TxtWriter(CYCLE_WORD, KEY_WORDS);
+            writer = new TxtWriter(CYCLE_WORDS, KEY_WORDS);
             TxtReader reader = new TxtReader(FILE_NAME);
             boolean unfinished = true;
 
@@ -62,7 +62,7 @@ class DataWH extends SwingWorker<Integer, String> {
 
     private boolean makeHT(List<String> list) {
         if (tmpHt.size() == KEY_WORDS.size()) {
-            tmpHt.put(CYCLE_WORD, currentCWValue);
+            tmpHt.put(CYCLE_WORDS, currentCWValue);
             if (chk.check(tmpHt)) {
 //                STORAGE.add(tmpHt);
                 writer.writeLineToTxt(tmpHt);
@@ -73,8 +73,8 @@ class DataWH extends SwingWorker<Integer, String> {
         if (list == null) {                                      /* End of input */
             return false;
         }
-        if (list.contains(CYCLE_WORD)) {
-            currentCWValue = list.get(list.indexOf(CYCLE_WORD) + 1);     /* Next string after CW is CW value */
+        if (list.contains(CYCLE_WORDS)) {
+            currentCWValue = list.get(list.indexOf(CYCLE_WORDS) + 1);     /* Next string after CW is CW value */
         }
         for (int i = 0; i < list.size(); i += 2) {           /* Even strings (and 0) are KWs */
             if (KEY_WORDS.contains(list.get(i))) {              /* Odd strings are KW values */
