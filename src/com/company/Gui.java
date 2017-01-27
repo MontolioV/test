@@ -22,7 +22,8 @@ public class Gui {
     private JPanel background;
     private JTextArea preview = new JTextArea();
     private JPanel fieldsPanel;
-    private ArrayList<JComboBox<String>> updCB = new ArrayList<JComboBox<String>>();
+    private ArrayList<JComboBox<String>> cwJCBs = new ArrayList<JComboBox<String>>();
+    private JList<String> kwsJList = new JList<String>();
     private ArrayList<KeyWordWithFrequency> frKWs;
     private String fileNameAbsolute;
     private JProgressBar progressBar;
@@ -46,7 +47,18 @@ public class Gui {
         this.addField("Маркер цикла", 1);
         this.addField();
 
+        JPanel kwListPanel = new JPanel();
+        kwListPanel.setLayout(new BoxLayout(kwListPanel, BoxLayout.Y_AXIS));
+        kwListPanel.add(new JLabel("Ключевые слова"));
+        JScrollPane kwsScrollPane = new JScrollPane(kwsJList);
+        kwsScrollPane.setPreferredSize(new Dimension(300,100));
+        kwListPanel.add(kwsScrollPane);
+
         preview.setEditable(false);
+
+        progressBar = new JProgressBar(0,100);
+        progressBar.setStringPainted(true);
+        progressBar.setVisible(false);
 
         JButton goParseButton = new JButton("Пуск!");
         goParseButton.addActionListener(new GoParseActionListener());
@@ -57,25 +69,27 @@ public class Gui {
         background.add(chooseFileBut, headerGBCons);
 
         //Fields
-        GridBagConstraints fieldsGBCons = new GridBagConstraints(0, 2, 1, 1, 0, 1,
-                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 10, 20), 0, 0);
+        GridBagConstraints fieldsGBCons = new GridBagConstraints(0, 2, 1, 1, 0, 0,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 10, 0, 20), 0, 0);
         background.add(fieldsPanel, fieldsGBCons);
 
+        //Fields #2
+        GridBagConstraints fieldsAreaGBCons = new GridBagConstraints(0, 3, 1, 1, 0, 1,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 10, 10, 20), 0, 0);
+        background.add(kwsJList, fieldsAreaGBCons);
+
         //Preview
-        GridBagConstraints previewCons = new GridBagConstraints(1, 2, 1, 1, 1, 1,
+        GridBagConstraints previewCons = new GridBagConstraints(1, 2, 1, 2, 1, 1,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 20), 0, 0);
         background.add(new JScrollPane(preview), previewCons);
 
         //Progress bar
-        progressBar = new JProgressBar(0,100);
-        progressBar.setStringPainted(true);
-        progressBar.setVisible(false);
-        GridBagConstraints progressBarCons = new GridBagConstraints(0, 3, 2, 1, 1, 0,
+        GridBagConstraints progressBarCons = new GridBagConstraints(0, 4, 2, 1, 1, 0,
                 GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 20, 20), 0, 10);
         background.add(progressBar, progressBarCons);
 
         //Start button
-        GridBagConstraints goParseButCons = new GridBagConstraints(0, 4, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
+        GridBagConstraints goParseButCons = new GridBagConstraints(0, 5, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
                 GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 200, 20);
         background.add(goParseButton, goParseButCons);
 
@@ -87,21 +101,26 @@ public class Gui {
     }
 
     private void fillGuiFromFile(File file) {
+        DefaultListModel<String> listModel = new DefaultListModel<String>();
         makePreview(file);
         frKWs = findKWs(file);
 
-        for (JComboBox<String> cb : updCB) {
+        for (JComboBox<String> cb : cwJCBs) {
             cb.removeAllItems();
             for (KeyWordWithFrequency kw : frKWs) {
                 cb.addItem(kw.getName());
             }
         }
+        for (KeyWordWithFrequency kw : frKWs) {
+            listModel.addElement(kw.getName());
+        }
+        kwsJList.setModel(listModel);
 
         fr.revalidate();
     }
 
     private void addField() {
-        this.addField("Ключевая фраза", updCB.size() + 2);
+        this.addField("Ключевая фраза", cwJCBs.size() + 2);
     }
 
     private void addField(String labelText, int gridY) {
@@ -109,12 +128,12 @@ public class Gui {
         JComboBox<String> defaultComboBox = new JComboBoxPreset<>();
 
         GridBagConstraints lableConstraints = new GridBagConstraints(1, gridY, 1, 1, 0, 0,
-                GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 10, 3, 20), 0, 0);
+                GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 20), 0, 0);
         GridBagConstraints comboBoxConstraints = new GridBagConstraints(2, gridY, 1, 1, 0, 0,
                 GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 0), 0, 0);
 
         defaultComboBox.setEditable(true);
-        updCB.add(defaultComboBox);
+        cwJCBs.add(defaultComboBox);
 
         if (frKWs != null) {
             for (KeyWordWithFrequency kw : frKWs) {
@@ -258,7 +277,7 @@ public class Gui {
                 objOutputStream = new ObjectOutputStream(new FileOutputStream(saveFile));
 
                 ArrayList selectedVal = new ArrayList();
-                for (JComboBox cb : updCB) {
+                for (JComboBox cb : cwJCBs) {
                     selectedVal.add(cb.getSelectedItem());
                 }
 
@@ -317,14 +336,14 @@ public class Gui {
                 }
 
                 //Restore selected items in comboboxes
-                if (updCB.size() < selectedVal.size()) {
-                    int fieldsToAdd = selectedVal.size() - updCB.size();
+                if (cwJCBs.size() < selectedVal.size()) {
+                    int fieldsToAdd = selectedVal.size() - cwJCBs.size();
                     for (int i = 0; i < fieldsToAdd; i++) {
                         addField();
                     }
                 }
                 for (int i = 0; i < (selectedVal.size() - 1); i++) {
-                    updCB.get(i).setSelectedItem(selectedVal.get(i));
+                    cwJCBs.get(i).setSelectedItem(selectedVal.get(i));
                 }
 
             } catch (IOException e) {
@@ -352,8 +371,8 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
-//            if (updCB.size() < 10) {
-                String s = (String) updCB.get(updCB.size() - 1).getSelectedItem();
+//            if (cwJCBs.size() < 10) {
+                String s = (String) cwJCBs.get(cwJCBs.size() - 1).getSelectedItem();
                 if ((s != null) && (!s.equals(""))) {
                     addField();
                 }
@@ -374,7 +393,7 @@ public class Gui {
             String cw = null;
             ArrayList<String> kws = new ArrayList<String>();
 
-            for (JComboBox<String> comboB : updCB) {
+            for (JComboBox<String> comboB : cwJCBs) {
                 String s = (String) comboB.getSelectedItem();
                 if (cw == null) {
                     cw = s;
