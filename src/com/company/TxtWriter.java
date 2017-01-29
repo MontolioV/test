@@ -9,16 +9,18 @@ import java.util.*;
  * Created by MontolioV on 10.12.2016.
  */
 class TxtWriter {
-    private final String CYCLE_WORD;
+    private final List<String> CYCLE_WORDS;
     private final List<String> KEY_WORDS;
     private BufferedWriter buffer;
 
-    TxtWriter(String CYCLE_WORD, List<String> KEY_WORDS) {
-        this.CYCLE_WORD = CYCLE_WORD;
+    TxtWriter(List<String> CYCLE_WORDS, List<String> KEY_WORDS) {
+        this.CYCLE_WORDS = CYCLE_WORDS;
         this.KEY_WORDS = KEY_WORDS;
         try {
             this.buffer = new BufferedWriter(new FileWriter(new File("Отчет.txt")));
-            buffer.write(CYCLE_WORD + "\t");
+            for (String s : CYCLE_WORDS) {
+                buffer.write(s + "\t");
+            }
             for (String s : KEY_WORDS) {
                 buffer.write(s + "\t");
             }
@@ -34,24 +36,30 @@ class TxtWriter {
      * <p>Txt report may be easily transformed in electronic table (excel, libre/open calc) by tabs.
      * @param arl data structure to convert to report.
      */
-    void write_to_txt (ArrayList<Hashtable<String,String>> arl) {
-        String tmpS;
-        for (Hashtable<String, String> ht : arl) {
-            tmpS = ht.get(CYCLE_WORD) + "\t";
-            for (String s : KEY_WORDS) {
-                tmpS += ht.get(s) + "\t";
+    void write_to_txt (ArrayList<HashMap<String, String>> arl) {
+        StringJoiner sJoiner = new StringJoiner("\t");
+        for (HashMap<String, String> ht : arl) {
+            for (String s : CYCLE_WORDS) {
+                sJoiner.add(ht.get(s));
             }
-            send_to_buff(tmpS);
+            for (String s : KEY_WORDS) {
+                sJoiner.add(ht.get(s));
+            }
+            send_to_buff(sJoiner.toString());
         }
         close_buffer();
     }
 
-    void writeLineToTxt(Hashtable<String, String> ht) {
+    void writeLineToTxt(HashMap<String, String> ht) {
+        StringJoiner sJoiner = new StringJoiner("\t");
+        for (String s : CYCLE_WORDS) {
+            sJoiner.add(ht.get(s));
+        }
+        for (String s : KEY_WORDS) {
+            sJoiner.add(ht.get(s));
+        }
         try {
-            buffer.write(ht.get(CYCLE_WORD) + "\t");
-            for (String s : KEY_WORDS) {
-                buffer.write(ht.get(s) + "\t");
-            }
+            buffer.write(sJoiner.toString());
             buffer.newLine();
         } catch (IOException e) {
             e.printStackTrace();

@@ -1,5 +1,6 @@
 package com.company;
 
+import java.util.HashMap;
 import java.util.Hashtable;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Hashtable;
 class CheckDisabled implements Check {
 
     @Override
-    public boolean check(Hashtable<String, String> ht) {
+    public boolean check(HashMap<String, String> dataStructure) {
         return true;
     }
 }

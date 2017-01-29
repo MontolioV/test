@@ -1,6 +1,7 @@
 package com.company;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 /**
@@ -12,16 +13,16 @@ import java.util.Hashtable;
 class CheckDriversDebts implements Check {
     private final String[] CRITERIA = new String[] {"Статус документа","Сторно","Сумма накладной","Счет на"};
     @Override
-    public boolean check(Hashtable<String, String> ht) {
+    public boolean check(HashMap<String, String> dataStructure) {
         try {
-            if (ht.get("Статус документа").equals("Да")) {
+            if (dataStructure.get("Статус документа").equals("Да")) {
                 return false;
-            } else if (ht.get("Сторно").equals("Да")) {
+            } else if (dataStructure.get("Сторно").equals("Да")) {
                 return false;
-            } else if (ht.get("Сумма накладной").contains("-")) {
+            } else if (dataStructure.get("Сумма накладной").contains("-")) {
                 return false;
             } else {
-                switch (ht.get("Счет на")) {
+                switch (dataStructure.get("Счет на")) {
                     case "ПранаФарм":
                     case "МедСервисХарько":
                     case "МедСервисФирма":

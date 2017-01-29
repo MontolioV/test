@@ -1,5 +1,6 @@
 package com.company;
 
+import java.util.HashMap;
 import java.util.Hashtable;
 
 /**
@@ -9,5 +10,5 @@ import java.util.Hashtable;
  */
 interface Check {
 
-    boolean check (Hashtable<String, String> ht);
+    boolean check (HashMap<String, String> dataStructure);
 }

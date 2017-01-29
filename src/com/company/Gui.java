@@ -23,6 +23,7 @@ public class Gui {
     private JTextArea preview = new JTextArea();
     private JPanel fieldsPanel;
     private ArrayList<JComboBox<String>> cwJCBs = new ArrayList<JComboBox<String>>();
+    private ArrayList<JSpinner> cwSpinners = new ArrayList<>();
     private JList<String> kwsJList = new JList<String>();
     private ArrayList<KeyWordWithFrequency> frKWs;
     private String fileNameAbsolute;
@@ -44,8 +45,7 @@ public class Gui {
         chooseFileBut.addActionListener(new OpenListener());
 
         fieldsPanel = new JPanel(new GridBagLayout());
-        this.addField("Маркер цикла", 1);
-        this.addField();
+        this.addField(0);
 
         JPanel kwListPanel = new JPanel();
         kwListPanel.setLayout(new BoxLayout(kwListPanel, BoxLayout.Y_AXIS));
@@ -122,20 +122,21 @@ public class Gui {
     }
 
     private void addField() {
-        this.addField("Ключевая фраза", cwJCBs.size() + 2);
+        this.addField(cwJCBs.size());
     }
 
-    private void addField(String labelText, int gridY) {
-        JLabel defaultLabel = new JLabel(labelText);
+    private void addField(int gridY) {
+        JSpinner defaultSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1));
         JComboBox<String> defaultComboBox = new JComboBoxPreset<>();
 
-        GridBagConstraints lableConstraints = new GridBagConstraints(1, gridY, 1, 1, 0, 0,
-                GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 20), 0, 0);
-        GridBagConstraints comboBoxConstraints = new GridBagConstraints(2, gridY, 1, 1, 0, 0,
+        GridBagConstraints comboBoxConstraints = new GridBagConstraints(0, gridY, 1, 1, 0, 0,
+                GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 10), 0, 0);
+        GridBagConstraints spinnerConstraints = new GridBagConstraints(1, gridY, 1, 1, 0, 0,
                 GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 0), 0, 0);
 
         defaultComboBox.setEditable(true);
         cwJCBs.add(defaultComboBox);
+        cwSpinners.add(defaultSpinner);
 
         if (frKWs != null) {
             for (KeyWordWithFrequency kw : frKWs) {
@@ -145,8 +146,8 @@ public class Gui {
 
         defaultComboBox.addActionListener(new NoEmptyFieldsActListener());
 
-        fieldsPanel.add(defaultLabel,lableConstraints);
-        fieldsPanel.add(defaultComboBox,comboBoxConstraints);
+        fieldsPanel.add(defaultSpinner, spinnerConstraints);
+        fieldsPanel.add(defaultComboBox, comboBoxConstraints);
     }
 
     private void makePreview(File file) {
@@ -275,16 +276,20 @@ public class Gui {
 
         private void serialiseEnteredValues(File saveFile) {
             ObjectOutputStream objOutputStream = null;
+            ArrayList selectedVal = new ArrayList();
+            ArrayList selectedLvl = new ArrayList();
+
+            for (int i = 0; i < cwJCBs.size(); i++) {
+                selectedVal.add(cwJCBs.get(i).getSelectedItem());
+                selectedLvl.add(cwSpinners.get(i).getValue());
+            }
+
             try {
                 objOutputStream = new ObjectOutputStream(new FileOutputStream(saveFile));
 
-                ArrayList selectedVal = new ArrayList();
-                for (JComboBox cb : cwJCBs) {
-                    selectedVal.add(cb.getSelectedItem());
-                }
-
                 objOutputStream.writeObject(fileNameAbsolute);
                 objOutputStream.writeObject(selectedVal);
+                objOutputStream.writeObject(selectedLvl);
                 objOutputStream.writeObject(kwsJList.getSelectedValuesList());
 
             } catch (IOException e) {
@@ -328,6 +333,7 @@ public class Gui {
 
                 fileNameAbsolute = (String) objInputStream.readObject();
                 ArrayList cwsSelectedVal = (ArrayList) objInputStream.readObject();
+                ArrayList cwsSelectedLvl = (ArrayList) objInputStream.readObject();
                 List<String> kwsListSelected = (List<String>) objInputStream.readObject();
 
                 File restoredFile = new File(fileNameAbsolute);
@@ -344,11 +350,12 @@ public class Gui {
                         addField();
                     }
                 }
-                for (int i = 0; i < (cwsSelectedVal.size() - 1); i++) {
+                for (int i = 0; i < cwsSelectedVal.size(); i++) {
                     if (!frKWs.contains(new KeyWordWithFrequency((String) cwsSelectedVal.get(i)))) {
                         System.out.println("Маркер цикла " + "\"" + (String) cwsSelectedVal.get(i) + "\"" + " не найден в файле " + fileNameAbsolute + "\n" + "Возможна потеря данных.");
                     }
                     cwJCBs.get(i).setSelectedItem(cwsSelectedVal.get(i));
+                    cwSpinners.get(i).setValue(cwsSelectedLvl.get(i));
                 }
                 //Restore selected items in JList
                 DefaultListModel<String> curentModel = (DefaultListModel<String>) kwsJList.getModel();
@@ -410,11 +417,18 @@ public class Gui {
         @Override
         public void actionPerformed(ActionEvent e) {
             ArrayList<String> cws = new ArrayList<String>();
+            ArrayList<CWwithLvl> cwsLvl = new ArrayList<>();
 
-            for (JComboBox<String> comboB : cwJCBs) {
-                String s = (String) comboB.getSelectedItem();
+            for (int i = 0; i < cwJCBs.size(); i++) {
+                String s = (String) cwJCBs.get(i).getSelectedItem();
                 if (!s.equals("")) {
                     cws.add(s);
+                    cwsLvl.add(new CWwithLvl(s, (int) cwSpinners.get(i).getValue()));
+                }
+            }
+            for (String kw : kwsJList.getSelectedValuesList()) {
+                if (cws.contains(kw)) {
+                    System.out.println("Ключевые слова не должны совпадать с маркерами цикла." + "\n" + kw);
                 }
             }
 
@@ -423,15 +437,13 @@ public class Gui {
 
             if (cws.isEmpty()) {
                 System.out.println("Нельзя парсить без маркера цикла!");
-//            } else if (cws.isEmpty()) {
-//                System.out.println("Выберите по крайней мере одно ключевое слово.");
             } else {
 //                long time = System.currentTimeMillis();
 //                DataWH dwh = new DataWH(fileNameAbsolute,cw, kws.toArray(new String[0]));
 //                dwh.parse();
 //                System.out.println(((double) (System.currentTimeMillis() - time) / 1000) + " sec");
 
-                DataWH dwh = new DataWH(fileNameAbsolute, cws, kwsJList.getSelectedValuesList());
+                DataWH dwh = new DataWH(fileNameAbsolute, cws, cwsLvl, kwsJList.getSelectedValuesList());
                 dwh.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent event) {
