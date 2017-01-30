@@ -429,6 +429,7 @@ public class Gui {
                     cwsLvl.add(new CWwithLvl(s, (int) cwSpinners.get(i).getValue()));
                 }
             }
+
             for (String kw : kwsJList.getSelectedValuesList()) {
                 if (cws.contains(kw)) {
                     System.out.println("Ключевые слова не должны совпадать с маркерами цикла." + "\n" + kw);
@@ -438,8 +439,12 @@ public class Gui {
             System.out.println("\n" + "Cycle words:" + cws.toString());
             System.out.println("Keywords:" + kwsJList.getSelectedValuesList().toString());
 
-            if (cws.isEmpty()) {
+            if (fileNameAbsolute == null) {
+                System.out.println("Файл не выбран.");
+            } else if (cws.isEmpty()) {
                 System.out.println("Нельзя парсить без маркера цикла!");
+            } else if (kwsJList.getSelectedValuesList().isEmpty()) {
+                System.out.println("Нельзя парсить без ключевых слов.");
             } else {
 //                long time = System.currentTimeMillis();
 //                DataWH dwh = new DataWH(fileNameAbsolute,cw, kws.toArray(new String[0]));
@@ -466,8 +471,8 @@ public class Gui {
                                             e1.printStackTrace();
                                         } catch (ExecutionException exex) {
                                             exex.printStackTrace();
-                                            JOptionPane.showMessageDialog(frame,exex.getCause().getMessage()
-                                            ,"Возникла проблема",JOptionPane.WARNING_MESSAGE);
+                                            JOptionPane.showMessageDialog(frame, exex.getCause().getMessage()
+                                                    , "Возникла проблема", JOptionPane.WARNING_MESSAGE);
                                         }
                                         progressBar.setVisible(false);
                                         break;
