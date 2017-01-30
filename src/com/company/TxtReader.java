@@ -23,7 +23,7 @@ class TxtReader {
         this.buffer = new BufferedReader(new FileReader(file));
     }
 
-    List<String> getListFromTxt() {
+    List<String> getListFromTxt() throws IOException {
         String[] sArr = getArrayFromTxt();
         if (sArr != null) {
             return Arrays.asList(sArr);
@@ -32,7 +32,7 @@ class TxtReader {
         }
     }
 
-    String[] getArrayFromTxt() {
+    String[] getArrayFromTxt() throws IOException {
         try {
             String s = this.buffer.readLine();
             if (s != null){
@@ -44,9 +44,9 @@ class TxtReader {
                 return null;
             }
         } catch (IOException e) {
-            System.out.println("String extracting from txt failed");
-            e.printStackTrace();
-            return null;
+            close_buffer();
+            throw new IOException("Не удалось прочитать строку из файла.", e);
+//            return null;
         }
     }
 

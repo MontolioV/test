@@ -10,6 +10,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * GUI object.
@@ -157,7 +158,7 @@ public class Gui {
 
         try {
             bReader = new BufferedReader(new FileReader(file));
-            for (int i = 0; i < 15; i++) {
+            for (int i = 0; i < 30; i++) {
                 String s = bReader.readLine();
                 if (s == null) {
                     ending = "Конец.";
@@ -189,7 +190,7 @@ public class Gui {
         try {
             tr = new TxtReader(file);
 
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 300; i++) {
                 tmpSal = new ArrayList<String>();
                 List<String> from_txt = tr.getListFromTxt();
 
@@ -219,6 +220,8 @@ public class Gui {
             tr.close_buffer();
         } catch (FileNotFoundException e1) {
             e1.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return possibleKWs;
     }
@@ -421,7 +424,7 @@ public class Gui {
 
             for (int i = 0; i < cwJCBs.size(); i++) {
                 String s = (String) cwJCBs.get(i).getSelectedItem();
-                if (!s.equals("")) {
+                if (s != null && !s.equals("")) {
                     cws.add(s);
                     cwsLvl.add(new CWwithLvl(s, (int) cwSpinners.get(i).getValue()));
                 }
@@ -456,8 +459,17 @@ public class Gui {
                                         progressBar.setVisible(true);
                                         break;
                                     case DONE:
+                                        try {
+                                            dwh.get();
+                                            makePreview(new File("Отчет.txt"));
+                                        } catch (InterruptedException e1) {
+                                            e1.printStackTrace();
+                                        } catch (ExecutionException exex) {
+                                            exex.printStackTrace();
+                                            JOptionPane.showMessageDialog(frame,exex.getCause().getMessage()
+                                            ,"Возникла проблема",JOptionPane.WARNING_MESSAGE);
+                                        }
                                         progressBar.setVisible(false);
-                                        makePreview(new File("Отчет.txt"));
                                         break;
                                 }
                                 break;

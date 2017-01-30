@@ -24,6 +24,7 @@ class DataWH extends SwingWorker<Integer, String> {
     private long processedLines;
     private long reportLines = 1;
     private TxtWriter writer;
+    private TxtReader reader;
 
     DataWH(String file_name, List<String> cws, List<CWwithLvl> cwsLvl, List<String> kws) {
         this.FILE_NAME = file_name;
@@ -36,10 +37,10 @@ class DataWH extends SwingWorker<Integer, String> {
     protected Integer doInBackground() throws Exception {
         chk = new CheckDisabled();
         writer = new TxtWriter(CYCLE_WORDS, KEY_WORDS);
-        TxtReader reader = new TxtReader(FILE_NAME);
+        reader = new TxtReader(FILE_NAME);
         boolean unfinished = true;
 
-        try {
+//        try {
             totalLines = reader.getAmountOfLines();
 
             while (unfinished) {
@@ -47,6 +48,7 @@ class DataWH extends SwingWorker<Integer, String> {
                 if (unfinished) processedLines++;
                 setProgress((int) (((double) processedLines / totalLines) * 100));
             }
+/*
         } catch (FileNotFoundException e) {
             System.out.println("Указанный файл не найден!");
             e.printStackTrace();
@@ -57,18 +59,21 @@ class DataWH extends SwingWorker<Integer, String> {
             System.out.println("Lines processed: " + processedLines);
             System.out.println("Generated lines to report: " + reportLines);
         }
+*/
         return null;
     }
 
     @Override
     protected void done() {
-        try {
-            get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        if (reader != null) {
+            reader.close_buffer();
         }
+        if (writer != null) {
+            writer.close_buffer();
+        }
+        System.out.println("Total lines in file: " + totalLines);
+        System.out.println("Lines processed: " + processedLines);
+        System.out.println("Generated lines to report: " + reportLines);
     }
 
     /**
@@ -78,7 +83,7 @@ class DataWH extends SwingWorker<Integer, String> {
      * @param inputList parsed input line.
      * @return  <tt>true</tt> - if input was received.<p><tt>false</tt> - if input stops.</p>
      */
-    private boolean makeHT(List<String> inputList) {
+    private boolean makeHT(List<String> inputList) throws IOException {
         if (!poolOfKWs.isEmpty() && poolOfKWs.get(poolOfKWs.size() - 1).size() == KEY_WORDS.size() && tmpCWvals.size() == CYCLE_WORDS.size()) {
             for (HashMap<String, String> ht : poolOfKWs) {
                 tmpCWvals.forEach((cWwithLvl, s) -> ht.put(cWwithLvl.getCw(), s));

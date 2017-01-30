@@ -13,11 +13,15 @@ class TxtWriter {
     private final List<String> KEY_WORDS;
     private BufferedWriter buffer;
 
-    TxtWriter(List<String> CYCLE_WORDS, List<String> KEY_WORDS) {
+    TxtWriter(List<String> CYCLE_WORDS, List<String> KEY_WORDS) throws IOException{
         this.CYCLE_WORDS = CYCLE_WORDS;
         this.KEY_WORDS = KEY_WORDS;
         try {
             this.buffer = new BufferedWriter(new FileWriter(new File("Отчет.txt")));
+        } catch (IOException e) {
+            throw new IOException("Не удалось открыть файл для записи отчета.", e);
+        }
+        try {
             for (String s : CYCLE_WORDS) {
                 buffer.write(s + "\t");
             }
@@ -26,16 +30,34 @@ class TxtWriter {
             }
             buffer.newLine();
         } catch (IOException e) {
-            System.out.println("Не удалось открыть файл для записи отчета и записать шапку.");
-            e.printStackTrace();
+            close_buffer();
+            throw new IOException("Не удалось записать шапку в отчет.", e);
         }
     }
 
     /**
      * The method to output results data to txt.
      * <p>Txt report may be easily transformed in electronic table (excel, libre/open calc) by tabs.
-     * @param arl data structure to convert to report.
+     * @param ht data structure to convert into lines of report.
      */
+    void writeLineToTxt(HashMap<String, String> ht) throws IOException {
+        StringJoiner sJoiner = new StringJoiner("\t");
+        for (String s : CYCLE_WORDS) {
+            sJoiner.add(ht.get(s));
+        }
+        for (String s : KEY_WORDS) {
+            sJoiner.add(ht.get(s));
+        }
+        try {
+            buffer.write(sJoiner.toString());
+            buffer.newLine();
+        } catch (IOException e) {
+            close_buffer();
+            throw new IOException("Не удалось записать строку в файл.", e);
+        }
+    }
+
+/*
     void write_to_txt (ArrayList<HashMap<String, String>> arl) {
         StringJoiner sJoiner = new StringJoiner("\t");
         for (HashMap<String, String> ht : arl) {
@@ -50,23 +72,6 @@ class TxtWriter {
         close_buffer();
     }
 
-    void writeLineToTxt(HashMap<String, String> ht) {
-        StringJoiner sJoiner = new StringJoiner("\t");
-        for (String s : CYCLE_WORDS) {
-            sJoiner.add(ht.get(s));
-        }
-        for (String s : KEY_WORDS) {
-            sJoiner.add(ht.get(s));
-        }
-        try {
-            buffer.write(sJoiner.toString());
-            buffer.newLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Не удалось записать строку в файл.");
-        }
-    }
-
     private void send_to_buff(String s) {
         try {
             buffer.write(s);
@@ -76,6 +81,7 @@ class TxtWriter {
             e.printStackTrace();
         }
     }
+*/
 
     void close_buffer(){
         try {
