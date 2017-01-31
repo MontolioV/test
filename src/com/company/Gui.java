@@ -1,5 +1,7 @@
 package com.company;
 
+import com.sun.xml.internal.ws.encoding.soap.SerializationException;
+
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -73,17 +75,17 @@ public class Gui {
 
         //Fields
         GridBagConstraints fieldsGBCons = new GridBagConstraints(0, 2, 1, 1, 0, 0,
-                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 10, 0, 20), 0, 0);
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 10, 0, 10), 0, 0);
         background.add(fieldsPanel, fieldsGBCons);
 
         //Fields #2
         GridBagConstraints fieldsAreaGBCons = new GridBagConstraints(0, 3, 1, 1, 0, 1,
-                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 10, 10, 20), 0, 0);
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 10, 10, 10), 0, 0);
         background.add(kwListPanel, fieldsAreaGBCons);
 
         //Preview
         GridBagConstraints previewCons = new GridBagConstraints(1, 2, 1, 2, 1, 1,
-                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 20), 0, 0);
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 10), 0, 0);
         background.add(new JScrollPane(preview), previewCons);
 
         //Progress bar
@@ -93,7 +95,7 @@ public class Gui {
 
         //Start button
         GridBagConstraints goParseButCons = new GridBagConstraints(0, 5, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
-                GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 20, 0), 200, 20);
+                GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 200, 20);
         background.add(goParseButton, goParseButCons);
 
         frame.setJMenuBar(menuBar);
@@ -168,14 +170,12 @@ public class Gui {
             }
             preview.append("\n" + ending);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            System.out.println("Файл не найден. Превью не заполнено.");
+            showWarningMessage("Превью не заполнено.", e);
         } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("При заполнении превью возникло исключение.");
+            showWarningMessage("При заполнении превью возникло исключение.", e);
         }finally {
             try {
-                bReader.close();
+                if (bReader != null) bReader.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -219,18 +219,18 @@ public class Gui {
 
             tr.close_buffer();
         } catch (FileNotFoundException e1) {
-            e1.printStackTrace();
+            showWarningMessage("", e1);
         } catch (IOException e) {
-            e.printStackTrace();
+            showWarningMessage("Исключение при формировании списка ключевых слов.", e);
         }
         return possibleKWs;
     }
 
-    private JFileChooser makeSerialisFChooser() {
+    private JFileChooser makeSerialisFChooser() throws SecurityException {
         Path saveDir = Paths.get("","Saves").toAbsolutePath();
         if (!saveDir.toFile().exists()) {
             if (!saveDir.toFile().mkdir()) {
-                System.out.println("Не удалось создать папку Saves");
+                throw new SecurityException("Не удалось создать папку Saves. Недостаточно прав.");
             }
         }
 
@@ -239,6 +239,28 @@ public class Gui {
         fileChooser.setAcceptAllFileFilterUsed(false);
 
         return fileChooser;
+    }
+
+    private void showWarningMessage(String  message) {
+        showWarningMessage(message, null);
+    }
+
+    private void showWarningMessage(Exception e) {
+        showWarningMessage("", e);
+    }
+
+    private void showWarningMessage(String message, Exception e) {
+        e.printStackTrace();
+
+        StringJoiner stringJoiner = new StringJoiner("\n");
+        if (message != null && !message.equals("")) stringJoiner.add(message);
+        while (e != null) {
+            message = e.getMessage();
+            if (message != null && !message.equals("")) stringJoiner.add(message);
+            e = (Exception) e.getCause();
+        }
+        JOptionPane.showMessageDialog(frame, stringJoiner.toString(),
+                "Возникла проблема", JOptionPane.WARNING_MESSAGE);
     }
 
     private class OpenListener implements ActionListener {
@@ -255,7 +277,7 @@ public class Gui {
                     fillGuiFromFile(fileChooser.getSelectedFile());
                     fileNameAbsolute = fileChooser.getSelectedFile().toString();
                 } else {
-                    System.out.println("Нет такого файла!");
+                    showWarningMessage(new IllegalArgumentException("Нет такого файла!"));
                 }
             }
         }
@@ -296,11 +318,10 @@ public class Gui {
                 objOutputStream.writeObject(kwsJList.getSelectedValuesList());
 
             } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println("Сериализация провалилась. Не удалось сохранить настройки в файл.");
+                showWarningMessage("Сериализация провалилась. Не удалось сохранить настройки в файл.", e);
             } finally {
                 try {
-                    objOutputStream.close();
+                    if (objOutputStream != null) objOutputStream.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                     System.out.println("Не удалось закрыть поток сериализации.");
@@ -323,7 +344,7 @@ public class Gui {
                 if (selectedFile.exists()) {
                     deserialise(selectedFile);
                 } else {
-                    System.out.println("Нет такого файла. Невозможно загрузить.");
+                    showWarningMessage(new IllegalArgumentException("Нет такого файла. Невозможно загрузить."));
                 }
 
             }
@@ -331,6 +352,7 @@ public class Gui {
 
         private void deserialise(File file) {
             ObjectInputStream objInputStream = null;
+            StringJoiner missingWordsJoiner = new StringJoiner("\",\"", "\"", "\"");
             try {
                 objInputStream = new ObjectInputStream(new FileInputStream(file));
 
@@ -343,7 +365,7 @@ public class Gui {
                 if (restoredFile.exists()) {
                     fillGuiFromFile(restoredFile);
                 } else {
-                    System.out.println("Не получилось найти старый файл при загрузке.");
+                    throw new FileNotFoundException("Не получилось найти старый файл при загрузке.");
                 }
 
                 //Restore selected items in combo boxes
@@ -355,7 +377,7 @@ public class Gui {
                 }
                 for (int i = 0; i < cwsSelectedVal.size(); i++) {
                     if (!frKWs.contains(new KeyWordWithFrequency((String) cwsSelectedVal.get(i)))) {
-                        System.out.println("Маркер цикла " + "\"" + (String) cwsSelectedVal.get(i) + "\"" + " не найден в файле " + fileNameAbsolute + "\n" + "Возможна потеря данных.");
+                        missingWordsJoiner.add((String) cwsSelectedVal.get(i));
                     }
                     cwJCBs.get(i).setSelectedItem(cwsSelectedVal.get(i));
                     cwSpinners.get(i).setValue(cwsSelectedLvl.get(i));
@@ -367,23 +389,28 @@ public class Gui {
                 for (String oldVal : kwsListSelected) {
                     ind = curentModel.indexOf(oldVal);
                     if (ind == -1) {
-                        System.out.println("Ключевое слово " + "\"" + oldVal + "\"" + " не найдено в файле " + fileNameAbsolute + "\n" + "Возможна потеря данных.");
+                        missingWordsJoiner.add(oldVal);
                     } else {
                         newSelected.add(ind);
                     }
                 }
+
+                if (!missingWordsJoiner.toString().equals("\"\"")) {
+                    showWarningMessage("Не получается найти в файле " + fileNameAbsolute + "\n" +
+                            missingWordsJoiner.toString() + "\n" + "Возможна потеря данных.");
+                }
+
                 int[] indices = newSelected.stream().filter(Objects::nonNull).mapToInt(Integer::intValue).toArray();
                 kwsJList.setSelectedIndices(indices);
 
             } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println("Сериализация провалилась. Не удалось загрузить настройки из файла.");
+                showWarningMessage("Сериализация провалилась. Не удалось загрузить настройки из файла.", e);
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                showWarningMessage("Ошибка десерриализации. ClassNotFoundException", e);
             } finally {
                 frame.revalidate();
                 try {
-                    objInputStream.close();
+                    if (objInputStream != null) objInputStream.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                     System.out.println("Не удалось закрыть поток сериализации.");
@@ -419,6 +446,14 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
+            try {
+                prepareAndGo();
+            } catch (IllegalArgumentException e1) {
+                showWarningMessage(e1);
+            }
+        }
+
+        private void prepareAndGo() {
             ArrayList<String> cws = new ArrayList<String>();
             ArrayList<CWwithLvl> cwsLvl = new ArrayList<>();
 
@@ -432,7 +467,8 @@ public class Gui {
 
             for (String kw : kwsJList.getSelectedValuesList()) {
                 if (cws.contains(kw)) {
-                    System.out.println("Ключевые слова не должны совпадать с маркерами цикла." + "\n" + kw);
+                    throw new IllegalArgumentException("Ключевые слова не должны совпадать с маркерами цикла." +
+                            "\n" + "\"" + kw + "\"");
                 }
             }
 
@@ -440,17 +476,12 @@ public class Gui {
             System.out.println("Keywords:" + kwsJList.getSelectedValuesList().toString());
 
             if (fileNameAbsolute == null) {
-                System.out.println("Файл не выбран.");
+                throw new IllegalArgumentException("Файл не выбран.");
             } else if (cws.isEmpty()) {
-                System.out.println("Нельзя парсить без маркера цикла!");
+                throw new IllegalArgumentException("Нельзя парсить без маркера цикла.");
             } else if (kwsJList.getSelectedValuesList().isEmpty()) {
-                System.out.println("Нельзя парсить без ключевых слов.");
+                throw new IllegalArgumentException("Нельзя парсить без ключевых слов.");
             } else {
-//                long time = System.currentTimeMillis();
-//                DataWH dwh = new DataWH(fileNameAbsolute,cw, kws.toArray(new String[0]));
-//                dwh.parse();
-//                System.out.println(((double) (System.currentTimeMillis() - time) / 1000) + " sec");
-
                 DataWH dwh = new DataWH(fileNameAbsolute, cws, cwsLvl, kwsJList.getSelectedValuesList());
                 dwh.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
@@ -468,11 +499,12 @@ public class Gui {
                                             dwh.get();
                                             makePreview(new File("Отчет.txt"));
                                         } catch (InterruptedException e1) {
-                                            e1.printStackTrace();
+                                            showWarningMessage("InterruptedException", e1);
                                         } catch (ExecutionException exex) {
-                                            exex.printStackTrace();
-                                            JOptionPane.showMessageDialog(frame, exex.getCause().getMessage()
-                                                    , "Возникла проблема", JOptionPane.WARNING_MESSAGE);
+                                            showWarningMessage((Exception) exex.getCause());
+//                                            exex.printStackTrace();
+//                                            JOptionPane.showMessageDialog(frame, exex.getCause().getMessage()
+//                                                    , "Возникла проблема", JOptionPane.WARNING_MESSAGE);
                                         }
                                         progressBar.setVisible(false);
                                         break;
@@ -485,10 +517,10 @@ public class Gui {
                         }
                     }
                 });
+
                 dwh.execute();
             }
         }
-
     }
 }
 

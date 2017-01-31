@@ -40,26 +40,19 @@ class DataWH extends SwingWorker<Integer, String> {
         reader = new TxtReader(FILE_NAME);
         boolean unfinished = true;
 
-//        try {
             totalLines = reader.getAmountOfLines();
 
             while (unfinished) {
-                unfinished = makeHT(reader.getListFromTxt());
+                try {
+                    unfinished = makeHT(reader.getListFromTxt());
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    throw new IllegalArgumentException("Проверте структуру файла и ключевые слова.\n" +
+                            "За ключевым словом должно следовать соответствующее значение, " +
+                            "отделённое знаком табуляции.", e);
+                }
                 if (unfinished) processedLines++;
                 setProgress((int) (((double) processedLines / totalLines) * 100));
             }
-/*
-        } catch (FileNotFoundException e) {
-            System.out.println("Указанный файл не найден!");
-            e.printStackTrace();
-        }finally {
-            reader.close_buffer();
-            writer.close_buffer();
-            System.out.println("Total lines in file: " + totalLines);
-            System.out.println("Lines processed: " + processedLines);
-            System.out.println("Generated lines to report: " + reportLines);
-        }
-*/
         return null;
     }
 
@@ -71,8 +64,8 @@ class DataWH extends SwingWorker<Integer, String> {
         if (writer != null) {
             writer.close_buffer();
         }
-        System.out.println("Total lines in file: " + totalLines);
-        System.out.println("Lines processed: " + processedLines);
+//        System.out.println("Total lines in file: " + totalLines);
+        System.out.println("Lines processed: " + processedLines + " of " + totalLines);
         System.out.println("Generated lines to report: " + reportLines);
     }
 

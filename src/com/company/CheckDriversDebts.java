@@ -13,7 +13,7 @@ import java.util.Hashtable;
 class CheckDriversDebts implements Check {
     private final String[] CRITERIA = new String[] {"Статус документа","Сторно","Сумма накладной","Счет на"};
     @Override
-    public boolean check(HashMap<String, String> dataStructure) {
+    public boolean check(HashMap<String, String> dataStructure) throws IllegalArgumentException {
         try {
             if (dataStructure.get("Статус документа").equals("Да")) {
                 return false;
@@ -32,8 +32,9 @@ class CheckDriversDebts implements Check {
                 }
             }
         } catch (NullPointerException npe) {
-            System.out.println("Для корректного отчета нужны следующие колонки:" + Arrays.toString(CRITERIA));
-            throw npe;
+            throw new IllegalArgumentException(
+                    "Для корректного отчета нужны следующие колонки:" + Arrays.toString(CRITERIA),
+                    npe);
         }
     }
 }
