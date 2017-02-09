@@ -1,7 +1,5 @@
 package com.company;
 
-import com.sun.xml.internal.ws.encoding.soap.SerializationException;
-
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -12,6 +10,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -23,14 +22,18 @@ public class Gui {
     private JFrame frame = new JFrame("test");
     private JMenuBar menuBar = new JMenuBar();;
     private JPanel background;
-    private JTextArea preview = new JTextArea();
+//    private JTextArea preview = new JTextArea();
     private JPanel fieldsPanel;
+    private JTabbedPane previewsTabs = new JTabbedPane();
+    private File oldPreviewFile;
     private ArrayList<JComboBox<String>> cwJCBs = new ArrayList<JComboBox<String>>();
     private ArrayList<JSpinner> cwSpinners = new ArrayList<>();
     private JList<String> kwsJList = new JList<String>();
     private ArrayList<KeyWordWithFrequency> frKWs;
-    private String fileNameAbsolute;
+    private String inputFileNameAbsolute;
     private JProgressBar progressBar;
+    private JTextField outputFileNameTF = new JTextField("Отчет");
+    private JButton goParseButton;
 
     public Gui() {
         JMenu mainMenu = new JMenu("Файл");
@@ -59,13 +62,14 @@ public class Gui {
         kwListPanel.add(kwsLabel);
         kwListPanel.add(kwsScrollPane);
 
-        preview.setEditable(false);
+        previewsTabs.addTab("Текущий файл", new JScrollPane(new JTextArea()));
+        previewsTabs.addTab("Предыдущий файл", new JScrollPane(new JTextArea()));
 
         progressBar = new JProgressBar(0,100);
         progressBar.setStringPainted(true);
         progressBar.setVisible(false);
 
-        JButton goParseButton = new JButton("Пуск!");
+        goParseButton = new JButton("Пуск!");
         goParseButton.addActionListener(new GoParseActionListener());
 
         //ChooseFile
@@ -86,7 +90,7 @@ public class Gui {
         //Preview
         GridBagConstraints previewCons = new GridBagConstraints(1, 2, 1, 2, 1, 1,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 10), 0, 0);
-        background.add(new JScrollPane(preview), previewCons);
+        background.add(previewsTabs, previewCons);
 
         //Progress bar
         GridBagConstraints progressBarCons = new GridBagConstraints(0, 4, 2, 1, 1, 0,
@@ -105,9 +109,14 @@ public class Gui {
         frame.setVisible(true);
     }
 
+    private JPanel makeFooter() {
+
+        return null;
+    };
+
     private void fillGuiFromFile(File file) {
         DefaultListModel<String> listModel = new DefaultListModel<String>();
-        makePreview(file);
+        updatePreview(file);
         frKWs = findKWs(file);
 
         for (JComboBox<String> cb : cwJCBs) {
@@ -122,6 +131,52 @@ public class Gui {
         kwsJList.setModel(listModel);
 
         frame.revalidate();
+    }
+
+    private void updatePreview(File file) {
+        JScrollPane oldPreview = (JScrollPane) previewsTabs.getComponentAt(0);
+        JScrollPane newPreview = makePreview(file);
+
+        if (file.equals(oldPreviewFile)) {
+            previewsTabs.setComponentAt(0, newPreview);
+        } else {
+            previewsTabs.setComponentAt(0, newPreview);
+            previewsTabs.setComponentAt(1, oldPreview);
+            oldPreviewFile = file;
+        }
+    }
+
+    private JScrollPane makePreview(File file) {
+        JTextArea previewTA = new JTextArea();
+        BufferedReader bReader = null;
+        String ending = "/* И так далее... */";
+
+        previewTA.setEditable(false);
+        previewTA.append("Файл " + file.getName() + "\n");
+        previewTA.append("/* Начало */" + "\n");
+        try {
+            bReader = new BufferedReader(new FileReader(file));
+            for (int i = 0; i < 30; i++) {
+                String s = bReader.readLine();
+                if (s == null) {
+                    ending = "/* Конец. */";
+                    break;
+                }
+                previewTA.append(s + "\n");
+            }
+            previewTA.append(ending);
+        } catch (FileNotFoundException e) {
+            showWarningMessage("Превью не заполнено. Не получается найти файл.", e);
+        } catch (IOException e) {
+            showWarningMessage("При заполнении превью возникло исключение.", e);
+        }finally {
+            try {
+                if (bReader != null) bReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return new JScrollPane(previewTA);
     }
 
     private void addField() {
@@ -151,35 +206,6 @@ public class Gui {
 
         fieldsPanel.add(defaultSpinner, spinnerConstraints);
         fieldsPanel.add(defaultComboBox, comboBoxConstraints);
-    }
-
-    private void makePreview(File file) {
-        BufferedReader bReader = null;
-        preview.setText(null);
-        String ending = "И так далее...";
-
-        try {
-            bReader = new BufferedReader(new FileReader(file));
-            for (int i = 0; i < 30; i++) {
-                String s = bReader.readLine();
-                if (s == null) {
-                    ending = "Конец.";
-                    break;
-                }
-                preview.append(s + "\n");
-            }
-            preview.append("\n" + ending);
-        } catch (FileNotFoundException e) {
-            showWarningMessage("Превью не заполнено.", e);
-        } catch (IOException e) {
-            showWarningMessage("При заполнении превью возникло исключение.", e);
-        }finally {
-            try {
-                if (bReader != null) bReader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private ArrayList<KeyWordWithFrequency> findKWs(File file) {
@@ -275,7 +301,7 @@ public class Gui {
             if (response == JFileChooser.APPROVE_OPTION) {
                 if (fileChooser.getSelectedFile().exists()) {
                     fillGuiFromFile(fileChooser.getSelectedFile());
-                    fileNameAbsolute = fileChooser.getSelectedFile().toString();
+                    inputFileNameAbsolute = fileChooser.getSelectedFile().toString();
                 } else {
                     showWarningMessage(new IllegalArgumentException("Нет такого файла!"));
                 }
@@ -312,7 +338,7 @@ public class Gui {
             try {
                 objOutputStream = new ObjectOutputStream(new FileOutputStream(saveFile));
 
-                objOutputStream.writeObject(fileNameAbsolute);
+                objOutputStream.writeObject(inputFileNameAbsolute);
                 objOutputStream.writeObject(selectedVal);
                 objOutputStream.writeObject(selectedLvl);
                 objOutputStream.writeObject(kwsJList.getSelectedValuesList());
@@ -356,12 +382,12 @@ public class Gui {
             try {
                 objInputStream = new ObjectInputStream(new FileInputStream(file));
 
-                fileNameAbsolute = (String) objInputStream.readObject();
+                inputFileNameAbsolute = (String) objInputStream.readObject();
                 ArrayList cwsSelectedVal = (ArrayList) objInputStream.readObject();
                 ArrayList cwsSelectedLvl = (ArrayList) objInputStream.readObject();
                 List<String> kwsListSelected = (List<String>) objInputStream.readObject();
 
-                File restoredFile = new File(fileNameAbsolute);
+                File restoredFile = new File(inputFileNameAbsolute);
                 if (restoredFile.exists()) {
                     fillGuiFromFile(restoredFile);
                 } else {
@@ -396,7 +422,7 @@ public class Gui {
                 }
 
                 if (!missingWordsJoiner.toString().equals("\"\"")) {
-                    showWarningMessage("Не получается найти в файле " + fileNameAbsolute + "\n" +
+                    showWarningMessage("Не получается найти в файле " + inputFileNameAbsolute + "\n" +
                             missingWordsJoiner.toString() + "\n" + "Возможна потеря данных.");
                 }
 
@@ -439,6 +465,8 @@ public class Gui {
     }
 
     private class GoParseActionListener implements ActionListener {
+        private boolean isRunning;
+        private DataWH dwh;
         /**
          * Invoked when an action occurs.
          *
@@ -447,15 +475,20 @@ public class Gui {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                prepareAndGo();
+                if (isRunning) {
+                    cancel();
+                } else {
+                    prepareAndGo();
+                }
             } catch (IllegalArgumentException e1) {
                 showWarningMessage(e1);
             }
         }
 
-        private void prepareAndGo() {
+        private void prepareAndGo() throws IllegalArgumentException {
             ArrayList<String> cws = new ArrayList<String>();
             ArrayList<CWwithLvl> cwsLvl = new ArrayList<>();
+            String outputFileName = outputFileNameTF.getText();
 
             for (int i = 0; i < cwJCBs.size(); i++) {
                 String s = (String) cwJCBs.get(i).getSelectedItem();
@@ -472,17 +505,25 @@ public class Gui {
                 }
             }
 
+            if (outputFileName == null || outputFileName.equals("")) {
+                throw new IllegalArgumentException("Файл для отчета должен как-то называться.");
+            } else if (!outputFileName.endsWith(".txt")){
+                outputFileName += ".txt";
+            }
+
             System.out.println("\n" + "Cycle words:" + cws.toString());
             System.out.println("Keywords:" + kwsJList.getSelectedValuesList().toString());
 
-            if (fileNameAbsolute == null) {
+            if (inputFileNameAbsolute == null) {
                 throw new IllegalArgumentException("Файл не выбран.");
             } else if (cws.isEmpty()) {
                 throw new IllegalArgumentException("Нельзя парсить без маркера цикла.");
             } else if (kwsJList.getSelectedValuesList().isEmpty()) {
                 throw new IllegalArgumentException("Нельзя парсить без ключевых слов.");
             } else {
-                DataWH dwh = new DataWH(fileNameAbsolute, cws, cwsLvl, kwsJList.getSelectedValuesList());
+                dwh = new DataWH(inputFileNameAbsolute, outputFileName,
+                                        cws, cwsLvl, kwsJList.getSelectedValuesList());
+                String finalOutputFileName = outputFileName;
                 dwh.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent event) {
@@ -492,21 +533,25 @@ public class Gui {
                                     case PENDING:
                                         break;
                                     case STARTED:
+                                        isRunning = true;
                                         progressBar.setVisible(true);
+                                        progressBar.setIndeterminate(true);
+                                        goParseButton.setText("Отмена");
                                         break;
                                     case DONE:
                                         try {
                                             dwh.get();
-                                            makePreview(new File("Отчет.txt"));
+                                            updatePreview(new File(finalOutputFileName));
                                         } catch (InterruptedException e1) {
                                             showWarningMessage("InterruptedException", e1);
-                                        } catch (ExecutionException exex) {
-                                            showWarningMessage((Exception) exex.getCause());
-//                                            exex.printStackTrace();
-//                                            JOptionPane.showMessageDialog(frame, exex.getCause().getMessage()
-//                                                    , "Возникла проблема", JOptionPane.WARNING_MESSAGE);
+                                        } catch (ExecutionException e2) {
+                                            showWarningMessage((Exception) e2.getCause());
+                                        } catch (CancellationException e3) {
+                                            showWarningMessage("Отменено", e3);
                                         }
                                         progressBar.setVisible(false);
+                                        isRunning = false;
+                                        goParseButton.setText("Пуск!");
                                         break;
                                 }
                                 break;
@@ -520,6 +565,10 @@ public class Gui {
 
                 dwh.execute();
             }
+        }
+
+        private void cancel() {
+            dwh.cancel(true);
         }
     }
 }
