@@ -13,11 +13,11 @@ class TxtWriter {
     private final List<String> KEY_WORDS;
     private BufferedWriter buffer;
 
-    TxtWriter(List<String> CYCLE_WORDS, List<String> KEY_WORDS) throws IOException{
+    TxtWriter(List<String> CYCLE_WORDS, List<String> KEY_WORDS, String outputFileName) throws IOException{
         this.CYCLE_WORDS = CYCLE_WORDS;
         this.KEY_WORDS = KEY_WORDS;
         try {
-            this.buffer = new BufferedWriter(new FileWriter(new File("Отчет.txt")));
+            this.buffer = new BufferedWriter(new FileWriter(new File(outputFileName)));
         } catch (IOException e) {
             throw new IOException("Не удалось открыть файл для записи отчета.", e);
         }

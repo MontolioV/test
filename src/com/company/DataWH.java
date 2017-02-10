@@ -3,7 +3,6 @@ package com.company;
 import javax.swing.*;
 import java.util.*;
 import java.io.*;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Core class to manipulate and store data.
@@ -12,7 +11,8 @@ import java.util.concurrent.ExecutionException;
  */
 
 class DataWH extends SwingWorker<Integer, String> {
-    private final String FILE_NAME;
+    private final String INPUT_FILE_NAME;
+    private final String OUTPUT_FILE_NAME;
     private final List<String> CYCLE_WORDS;
     private final List<CWwithLvl> CYCLE_WORDS_LVL;
     private final List<String> KEY_WORDS;
@@ -26,18 +26,19 @@ class DataWH extends SwingWorker<Integer, String> {
     private TxtWriter writer;
     private TxtReader reader;
 
-    DataWH(String file_name, List<String> cws, List<CWwithLvl> cwsLvl, List<String> kws) {
-        this.FILE_NAME = file_name;
+    DataWH(String input_file_name, String output_file_name, List<String> cws, List<CWwithLvl> cwsLvl, List<String> kws) {
+        this.INPUT_FILE_NAME = input_file_name;
         this.CYCLE_WORDS = cws;
         this.CYCLE_WORDS_LVL = cwsLvl;
         this.KEY_WORDS = kws;
+        this.OUTPUT_FILE_NAME = output_file_name;
     }
 
     @Override
     protected Integer doInBackground() throws Exception {
         chk = new CheckDisabled();
-        writer = new TxtWriter(CYCLE_WORDS, KEY_WORDS);
-        reader = new TxtReader(FILE_NAME);
+        writer = new TxtWriter(CYCLE_WORDS, KEY_WORDS, OUTPUT_FILE_NAME);
+        reader = new TxtReader(INPUT_FILE_NAME);
         boolean unfinished = true;
 
             totalLines = reader.getAmountOfLines();
