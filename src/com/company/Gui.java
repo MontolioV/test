@@ -22,7 +22,6 @@ public class Gui {
     private JFrame frame = new JFrame("test");
     private JMenuBar menuBar = new JMenuBar();
     private JPanel background;
-//    private JTextArea preview = new JTextArea();
     private JPanel fieldsPanel;
     private JTabbedPane previewsTabs = new JTabbedPane();
     private File oldPreviewFile;
@@ -32,7 +31,7 @@ public class Gui {
     private ArrayList<KeyWordWithFrequency> frKWs;
     private String inputFileNameAbsolute;
     private JProgressBar progressBar;
-    private JTextField outputFileNameTF = new JTextField("Отчет");
+    private JTextField outputFileNameTF;
     private JButton goParseButton;
 
     public Gui() {
@@ -69,9 +68,6 @@ public class Gui {
         progressBar.setStringPainted(true);
         progressBar.setVisible(false);
 
-        goParseButton = new JButton("Пуск!");
-        goParseButton.addActionListener(new GoParseActionListener());
-
         //ChooseFile
         GridBagConstraints headerGBCons = new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 0,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 0), 0, 20);
@@ -102,10 +98,10 @@ public class Gui {
                 GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 20, 20), 0, 10);
         background.add(progressBar, progressBarCons);
 
-        //Start button
-        GridBagConstraints goParseButCons = new GridBagConstraints(0, 6, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 0, 0,
-                GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 200, 20);
-        background.add(goParseButton, goParseButCons);
+        //Footer
+        GridBagConstraints goParseButCons = new GridBagConstraints(0, 6, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 1, 0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 10, 10, 10), 0, 0);
+        background.add(makeFooter(), goParseButCons);
 
         frame.setJMenuBar(menuBar);
         frame.getContentPane().add(background);
@@ -115,9 +111,30 @@ public class Gui {
     }
 
     private JPanel makeFooter() {
+        JPanel result = new JPanel(new GridBagLayout());
 
-        return null;
-    };
+        goParseButton = new JButton("Пуск!");
+        goParseButton.addActionListener(new GoParseActionListener());
+
+        outputFileNameTF = new JTextField("Отчет.txt");
+
+        //Label
+        GridBagConstraints labelCons = new GridBagConstraints(0, 0, 1, 1, 0, 0,
+                GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+        result.add(new JLabel("Как назовем файл отчета?"), labelCons);
+
+        //Output file name field
+        GridBagConstraints textFieldCons = new GridBagConstraints(0, 1, 1, 1, 0.6, 0,
+                GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 10);
+        result.add(outputFileNameTF, textFieldCons);
+
+        //Start button
+        GridBagConstraints startButtonCons = new GridBagConstraints(1, 0, 1, 2, 0.4, 1,
+                GridBagConstraints.LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+        result.add(goParseButton, startButtonCons);
+
+        return result;
+    }
 
     private void fillGuiFromFile(File file) {
         DefaultListModel<String> listModel = new DefaultListModel<String>();
