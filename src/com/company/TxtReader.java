@@ -2,7 +2,6 @@ package com.company;
 
 import java.util.*;
 import java.io.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Class to output AX report (.txt) and parse strings to logic parts.
@@ -10,7 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by MontolioV on 10.12.2016.
  */
 
-class TxtReader {
+public class TxtReader {
     private BufferedReader buffer = null;
     private File targetFile;
 
@@ -23,7 +22,7 @@ class TxtReader {
         this.buffer = new BufferedReader(new FileReader(file));
     }
 
-    List<String> getListFromTxt() throws IOException {
+    public List<String> getListFromTxt() throws IOException {
         String[] sArr = getArrayFromTxt();
         if (sArr != null) {
             return Arrays.asList(sArr);
@@ -32,7 +31,7 @@ class TxtReader {
         }
     }
 
-    String[] getArrayFromTxt() throws IOException {
+    public String[] getArrayFromTxt() throws IOException {
         try {
             String s = this.buffer.readLine();
             if (s != null){
@@ -46,11 +45,10 @@ class TxtReader {
         } catch (IOException e) {
             close_buffer();
             throw new IOException("Не удалось прочитать строку из файла.", e);
-//            return null;
         }
     }
 
-    void close_buffer(){
+    public void close_buffer(){
         try {
             if (this.buffer != null) {
                 this.buffer.close();
@@ -64,7 +62,7 @@ class TxtReader {
     /**
      * This method returns the amount of lines in file. BufferReader is reinitialised.
      */
-    long getAmountOfLines() throws FileNotFoundException{
+    public long getAmountOfLines() throws FileNotFoundException{
         long result = buffer.lines().count();
         close_buffer();
         buffer = new BufferedReader(new FileReader(targetFile));

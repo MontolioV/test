@@ -8,12 +8,12 @@ import java.util.*;
  * <p>
  * Created by MontolioV on 10.12.2016.
  */
-class TxtWriter {
+public class TxtWriter {
     private final List<String> CYCLE_WORDS;
     private final List<String> KEY_WORDS;
     private BufferedWriter buffer;
 
-    TxtWriter(List<String> CYCLE_WORDS, List<String> KEY_WORDS, String outputFileName) throws IOException{
+    public TxtWriter(List<String> CYCLE_WORDS, List<String> KEY_WORDS, String outputFileName) throws IOException{
         this.CYCLE_WORDS = CYCLE_WORDS;
         this.KEY_WORDS = KEY_WORDS;
         try {
@@ -40,7 +40,7 @@ class TxtWriter {
      * <p>Txt report may be easily transformed in electronic table (excel, libre/open calc) by tabs.
      * @param ht data structure to convert into lines of report.
      */
-    void writeLineToTxt(HashMap<String, String> ht) throws IOException {
+    public void writeLineToTxt(HashMap<String, String> ht) throws IOException {
         StringJoiner sJoiner = new StringJoiner("\t");
         for (String s : CYCLE_WORDS) {
             sJoiner.add(ht.get(s));
@@ -83,7 +83,7 @@ class TxtWriter {
     }
 */
 
-    void close_buffer(){
+    public void close_buffer(){
         try {
             if (this.buffer != null) {
                 this.buffer.close();
