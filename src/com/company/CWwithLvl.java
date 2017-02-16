@@ -1,7 +1,10 @@
 package com.company;
 
 /**
- * Created by main on 28.01.2017.
+ * This class allows to show hierarchy of Cycle words.
+ * <p>Cycle 0 includes all CW with lvl 1 and deeper. And so on.
+ * If "super" cycle ends, all "sub" cycles also must end.
+ * <p>Created by MontolioV on 28.01.2017.
  */
 public class CWwithLvl {
     private String cw;

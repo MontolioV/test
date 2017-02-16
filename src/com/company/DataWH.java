@@ -10,7 +10,7 @@ import java.io.*;
  * Created by MontolioV on 10.12.2016.
  */
 
-class DataWH extends SwingWorker<Integer, String> {
+public class DataWH extends SwingWorker<Integer, String> {
     private final String INPUT_FILE_NAME;
     private final String OUTPUT_FILE_NAME;
     private final List<String> CYCLE_WORDS;
@@ -26,7 +26,8 @@ class DataWH extends SwingWorker<Integer, String> {
     private TxtWriter writer;
     private TxtReader reader;
 
-    DataWH(String input_file_name, String output_file_name, List<String> cws, List<CWwithLvl> cwsLvl, List<String> kws) {
+    public DataWH(String input_file_name, String output_file_name,
+                  List<String> cws, List<CWwithLvl> cwsLvl, List<String> kws) {
         this.INPUT_FILE_NAME = input_file_name;
         this.CYCLE_WORDS = cws;
         this.CYCLE_WORDS_LVL = cwsLvl;
@@ -35,7 +36,7 @@ class DataWH extends SwingWorker<Integer, String> {
     }
 
     @Override
-    protected Integer doInBackground() throws Exception {
+    public Integer doInBackground() throws Exception {
         chk = new CheckDisabled();
         writer = new TxtWriter(CYCLE_WORDS, KEY_WORDS, OUTPUT_FILE_NAME);
         reader = new TxtReader(INPUT_FILE_NAME);
@@ -58,7 +59,7 @@ class DataWH extends SwingWorker<Integer, String> {
     }
 
     @Override
-    protected void done() {
+    public void done() {
         if (reader != null) {
             reader.close_buffer();
         }
