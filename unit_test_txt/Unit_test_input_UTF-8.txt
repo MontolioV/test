@@ -18,4 +18,10 @@ Cycle 2/1	3
 Cycle 3	4		
 KeyWord 1	4	KeyWord 2	4
 KeyWord 3	4		
-Cycle 2/2	3		
+Cycle 2/2	3
+Cycle 1	3
+Cycle 2/1	4
+Cycle 3	5
+KeyWord 1	5	KeyWord 2	5
+KeyWord 3	5
+Cycle 2/2	4

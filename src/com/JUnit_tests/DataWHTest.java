@@ -33,10 +33,10 @@ public class DataWHTest {
         dwh = new DataWH(input, output, cws, cWwithLvls, kws);
         expectedVals = new String[]{
                 "Cycle 1\tCycle 2/1\tCycle 2/2\tCycle 3\tKeyWord 1\tKeyWord 2\tKeyWord 3\t",
-                "1\t1\t1\t1\t1\t1\t1\t",
-                "1\t1\t1\t2\t2\t2\t2\t",
-                "1\t2\t2\t3\t3\t3\t3\t",
-                "2\t3\t3\t4\t4\t4\t4\t"};
+                "1\t1\t1\t1\t1\t1\t1",
+                "1\t1\t1\t2\t2\t2\t2",
+                "1\t2\t2\t3\t3\t3\t3",
+                "2\t3\t3\t4\t4\t4\t4"};
     }
 
     @After

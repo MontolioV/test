@@ -18,7 +18,7 @@ public class DataWH extends SwingWorker<Integer, String> {
     private final List<String> KEY_WORDS;
     private HashMap<String, String> tmpKWvals = new HashMap<>(25);
     private HashMap<CWwithLvl, String> tmpCWvals = new HashMap<>();
-    private ArrayList<HashMap<String, String>> poolOfKWs = new ArrayList<HashMap<String, String>>();
+    private ArrayList<HashMap<String, String>> pool = new ArrayList<HashMap<String, String>>();
     private Check chk;
     private long totalLines;
     private long processedLines;
@@ -79,43 +79,65 @@ public class DataWH extends SwingWorker<Integer, String> {
      * @return  <tt>true</tt> - if input was received.<p><tt>false</tt> - if input stops.</p>
      */
     private boolean makeHT(List<String> inputList) throws IOException {
-        if (!poolOfKWs.isEmpty() && poolOfKWs.get(poolOfKWs.size() - 1).size() == KEY_WORDS.size() && tmpCWvals.size() == CYCLE_WORDS.size()) {
-            for (HashMap<String, String> ht : poolOfKWs) {
-                tmpCWvals.forEach((cWwithLvl, s) -> ht.put(cWwithLvl.getCw(), s));
-                if (chk.check(ht)) {
-                    writer.writeLineToTxt(ht);
-                    reportLines++;
-                }
-            }
-            poolOfKWs = new ArrayList<>();
+        HashMap<String, String> lastHMinPool = (pool.isEmpty()) ? null : pool.get(pool.size() - 1);
+
+        if (lastHMinPool != null && lastHMinPool.size() == KEY_WORDS.size() + CYCLE_WORDS.size()) {
+            sendPoolToWriter();
+//            lastHMinPool = null;
         }
 
         //End of input
         if (inputList == null){
+            tmpCWvals.forEach(this::addMissingCwToPool);
+            sendPoolToWriter();
             return false;
         }
 
+//        boolean allKWsAreInPool = true;
+//        if (lastHMinPool == null || lastHMinPool.size() < KEY_WORDS.size()) {
+//            allKWsAreInPool = false;
+//        } else {
+//            for (String kw : KEY_WORDS) {
+//                if (!lastHMinPool.containsKey(kw)) {
+//                    allKWsAreInPool = false;
+//                }
+//            }
+//        }
+
+        //CWs
         for (CWwithLvl cwlvl : CYCLE_WORDS_LVL) {
             int index = inputList.indexOf(cwlvl.getCw());
             if (index >= 0) {
-                tmpCWvals.put(cwlvl, inputList.get(index + 1));     /* Next string after CW is CW value */
+                String saveCWVal;
+
+                saveCWVal = tmpCWvals.put(cwlvl, inputList.get(index + 1)); /* Next string after CW is CW value */
+                //This is for the "CW in the end of cycle" scenario
+//                if (allKWsAreInPool && saveCWVal == null) {
+//                    saveCWVal = inputList.get(index + 1);
+//                    System.out.println(cwlvl.getCw());
+//                }
+                addMissingCwToPool(cwlvl, saveCWVal);
+
+                //Clean old dependent CWs. Add them and their values to pool
                 for (CWwithLvl randomCW : CYCLE_WORDS_LVL) {
                     if (randomCW.getLvl() > cwlvl.getLvl()) {
-                        tmpCWvals.remove(randomCW);
+                        saveCWVal = tmpCWvals.remove(randomCW);
+                        addMissingCwToPool(randomCW, saveCWVal);
                     }
                 }
             }
         }
 
+        //KWs
         for (int i = 0; i < inputList.size(); i += 2) {
             //Take KW values only if we're sure the user want to take them. Also we ensure that they are not CWs, KW and CW can't match.
             if (KEY_WORDS.contains(inputList.get(i))) {
                 //Finding where to put KWs now
-                if (poolOfKWs.isEmpty() || poolOfKWs.get(poolOfKWs.size() - 1).containsKey(inputList.get(i))) {
+                if (pool.isEmpty() || pool.get(pool.size() - 1).containsKey(inputList.get(i))) {
                     tmpKWvals = new HashMap<String, String>(25);
-                    poolOfKWs.add(tmpKWvals);
+                    pool.add(tmpKWvals);
                 } else {
-                    for (HashMap<String, String> kwHM : poolOfKWs) {
+                    for (HashMap<String, String> kwHM : pool) {
                         if (!kwHM.containsKey(inputList.get(i))) {
                             tmpKWvals = kwHM;
                             break;
@@ -127,5 +149,31 @@ public class DataWH extends SwingWorker<Integer, String> {
         }
 
         return true;
+    }
+
+    private void addMissingCwToPool(CWwithLvl cwLvl, String cwValPrev) {
+//        String cwVal = (cwValPrev == null) ? tmpCWvals.get(cwLvl) : cwValPrev;
+//        if (cwVal == null) {
+//            throw new NullPointerException("Не получается нормально разобрать структуру файла.\n" +
+//                    "Постарайтесь сгенерировать файл возрастающим вложением.\n" +
+//                    "Цикличные слова не должны завершать циклы, они должны их начинать.");
+//        }
+        if (cwValPrev != null) {
+            for (HashMap<String, String> hm : pool) {
+                if (!hm.containsKey(cwLvl.getCw())) {
+                    hm.put(cwLvl.getCw(), cwValPrev);
+                }
+            }
+        }
+    }
+
+    private void sendPoolToWriter() throws IOException {
+        for (HashMap<String, String> hm : pool) {
+            if (chk.check(hm)) {
+                writer.writeLineToTxt(hm);
+                reportLines++;
+            }
+        }
+        pool = new ArrayList<>();
     }
 }
