@@ -37,6 +37,9 @@ public class DataWH extends SwingWorker<Integer, String> {
 
     @Override
     public Integer doInBackground() throws Exception {
+
+        fileAnalise();
+
         chk = new CheckDisabled();
         writer = new TxtWriter(CYCLE_WORDS, KEY_WORDS, OUTPUT_FILE_NAME);
         reader = new TxtReader(INPUT_FILE_NAME);
@@ -66,9 +69,54 @@ public class DataWH extends SwingWorker<Integer, String> {
         if (writer != null) {
             writer.close_buffer();
         }
-//        System.out.println("Total lines in file: " + totalLines);
         System.out.println("Lines processed: " + processedLines + " of " + totalLines);
         System.out.println("Generated lines to report: " + reportLines);
+    }
+
+    /**
+     * Analysis of file structure. If it is unappropriated an exception will be thrown.
+     * <p></p>
+     */
+    private void fileAnalise() throws IOException, IllegalArgumentException {
+        String mainCycle = Collections.min(CYCLE_WORDS_LVL).getCw();
+        LinkedList<String> unfoundCWs = new LinkedList<>(CYCLE_WORDS);
+        LinkedList<String> unfoundKWs = new LinkedList<>(KEY_WORDS);
+        TxtReader txtReader = new TxtReader(INPUT_FILE_NAME);
+        List<String> tmpList;
+
+        try {
+            //Find start of cycle
+            do {
+                tmpList = txtReader.getListFromTxt();
+            } while (tmpList != null && !tmpList.contains(mainCycle));
+            //Work with single cycle
+            do {
+                if (tmpList != null) {
+                    for (String s : tmpList) {
+                        unfoundKWs.remove(s);
+                        //Mark closing CWs
+                        if (unfoundCWs.remove(s) && unfoundKWs.isEmpty()) {
+                            for (CWwithLvl cwLvl : CYCLE_WORDS_LVL) {
+                                if (cwLvl.getCw().equals(s)) {
+                                    cwLvl.setAfterKWs(true);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                tmpList = txtReader.getListFromTxt();
+            } while (tmpList != null && !tmpList.contains(mainCycle));
+        }finally {
+            txtReader.close_buffer();
+        }
+
+        if (!unfoundCWs.isEmpty() || !unfoundKWs.isEmpty()) {
+            throw new IllegalArgumentException("Проверьте правильность маркеров циклов.\n" +
+                    "Заявленная вложенность не отслеживается.\n" +
+                    "Постарайтесь сгенерировать файл возрастающим вложением.\n" +
+                    "Цикличные слова не должны завершать циклы, они должны их начинать.");
+        }
     }
 
     /**
@@ -83,7 +131,6 @@ public class DataWH extends SwingWorker<Integer, String> {
 
         if (lastHMinPool != null && lastHMinPool.size() == KEY_WORDS.size() + CYCLE_WORDS.size()) {
             sendPoolToWriter();
-//            lastHMinPool = null;
         }
 
         //End of input
@@ -93,29 +140,17 @@ public class DataWH extends SwingWorker<Integer, String> {
             return false;
         }
 
-//        boolean allKWsAreInPool = true;
-//        if (lastHMinPool == null || lastHMinPool.size() < KEY_WORDS.size()) {
-//            allKWsAreInPool = false;
-//        } else {
-//            for (String kw : KEY_WORDS) {
-//                if (!lastHMinPool.containsKey(kw)) {
-//                    allKWsAreInPool = false;
-//                }
-//            }
-//        }
-
         //CWs
         for (CWwithLvl cwlvl : CYCLE_WORDS_LVL) {
             int index = inputList.indexOf(cwlvl.getCw());
             if (index >= 0) {
                 String saveCWVal;
-
-                saveCWVal = tmpCWvals.put(cwlvl, inputList.get(index + 1)); /* Next string after CW is CW value */
+                //Next string after CW is CW value
+                saveCWVal = tmpCWvals.put(cwlvl, inputList.get(index + 1));
                 //This is for the "CW in the end of cycle" scenario
-//                if (allKWsAreInPool && saveCWVal == null) {
-//                    saveCWVal = inputList.get(index + 1);
-//                    System.out.println(cwlvl.getCw());
-//                }
+                if (cwlvl.isAfterKWs()) {
+                    saveCWVal = inputList.get(index + 1);
+                }
                 addMissingCwToPool(cwlvl, saveCWVal);
 
                 //Clean old dependent CWs. Add them and their values to pool
@@ -152,12 +187,6 @@ public class DataWH extends SwingWorker<Integer, String> {
     }
 
     private void addMissingCwToPool(CWwithLvl cwLvl, String cwValPrev) {
-//        String cwVal = (cwValPrev == null) ? tmpCWvals.get(cwLvl) : cwValPrev;
-//        if (cwVal == null) {
-//            throw new NullPointerException("Не получается нормально разобрать структуру файла.\n" +
-//                    "Постарайтесь сгенерировать файл возрастающим вложением.\n" +
-//                    "Цикличные слова не должны завершать циклы, они должны их начинать.");
-//        }
         if (cwValPrev != null) {
             for (HashMap<String, String> hm : pool) {
                 if (!hm.containsKey(cwLvl.getCw())) {

@@ -556,6 +556,7 @@ public class Gui {
                                         break;
                                     case STARTED:
                                         isRunning = true;
+                                        progressBar.setValue(0);
                                         progressBar.setVisible(true);
                                         progressBar.setIndeterminate(true);
                                         goParseButton.setText("Отмена");

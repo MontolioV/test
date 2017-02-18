@@ -55,4 +55,10 @@ public class CWwithLvlTest {
         assertNotEquals(ob1.hashCode(), ob3.hashCode());
     }
 
+    @Test
+    public void compareToT() throws Exception {
+        assertTrue(ob1.compareTo(ob11) == 0);
+        assertTrue(ob1.compareTo(ob12) < 0);
+        assertTrue(ob3.compareTo(ob13) > 0);
+    }
 }

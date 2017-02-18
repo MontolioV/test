@@ -49,6 +49,6 @@ public class TxtReaderTest {
 
     @Test
     public void getAmountOfLines() throws Exception {
-        assertEquals(21, txtReader.getAmountOfLines());
+        assertEquals(27, txtReader.getAmountOfLines());
     }
 }
