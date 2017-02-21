@@ -3,6 +3,9 @@ package com.company;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -12,6 +15,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * GUI object.
@@ -36,10 +41,13 @@ public class Gui {
 
     public Gui() {
         JMenu mainMenu = new JMenu("Файл");
+        JMenuItem menuOpenRepButton = new JMenuItem("Отчет в буфер");
         JMenuItem menuSaveButton = new JMenuItem("Сохранить");
         JMenuItem menuLoadButton = new JMenuItem("Загрузить");
+        menuOpenRepButton.addActionListener(new CopyReportToClipboardListener());
         menuSaveButton.addActionListener(new SaveListener());
         menuLoadButton.addActionListener(new LoadListener());
+        mainMenu.add(menuOpenRepButton);
         mainMenu.add(menuSaveButton);
         mainMenu.add(menuLoadButton);
         menuBar.add(mainMenu);
@@ -327,6 +335,37 @@ public class Gui {
                 } else {
                     showWarningMessage(new IllegalArgumentException("Нет такого файла!"));
                 }
+            }
+        }
+    }
+
+    private class CopyReportToClipboardListener implements ActionListener {
+
+        /**
+         * Invoked when an action occurs.
+         *
+         * @param e
+         */
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try (BufferedReader br = new BufferedReader(new FileReader(outputFileNameTF.getText()))){
+                StringJoiner joiner = new StringJoiner("\n");
+                Predicate<String> addLine = (line) -> {
+                    if (line != null) {
+                        joiner.add(line);
+                        return true;
+                    }
+                    return false;
+                };
+
+                while (addLine.test(br.readLine())) {
+                }
+
+                Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+                Transferable textToCB = new StringSelection(joiner.toString());
+                cb.setContents(textToCB, null);
+            } catch (IOException e1) {
+                showWarningMessage(e1);
             }
         }
     }
