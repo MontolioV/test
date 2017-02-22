@@ -28,7 +28,6 @@ public class TxtWriter {
             for (String s : KEY_WORDS) {
                 buffer.write(s + "\t");
             }
-            buffer.newLine();
         } catch (IOException e) {
             close_buffer();
             throw new IOException("Не удалось записать шапку в отчет.", e);
@@ -49,8 +48,8 @@ public class TxtWriter {
             sJoiner.add(ht.get(s));
         }
         try {
-            buffer.write(sJoiner.toString());
             buffer.newLine();
+            buffer.write(sJoiner.toString());
         } catch (IOException e) {
             close_buffer();
             throw new IOException("Не удалось записать строку в файл.", e);
