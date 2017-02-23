@@ -22,17 +22,20 @@ public class ReportMergerTest {
     private final int[] RIGHT_MERGE_COL = {0, 4, 4};
     private final int[] WRONG_MERGE_COL = {0, 0, 0};
     private final String[] GOOD_RESULT = {
-            "KeyWord 1\tKeyWord 2\tCycle 1\tCycle 2/1\tCycle 2/2\tCycle 3\tCycle 1\tCycle 2/1\tCycle 2/2\tCycle 3\t",
-            "1\t1\t1\t1\t1\t1\t1\t1\t1\t1",
-            "2\t2\t1\t1\t1\t2\t1\t1\t1\t2",
-            "3\t3\t1\t2\t2\t3\t1\t2\t2\t3",
-            "4\t4\t2\t3\t3\t4\t2\t3\t3\t4",
-            "5\t5\t3\t4\t4\t5\t3\t4\t4\t5"
+            "KeyWord 1\tKeyWord 2" +
+                    "\tCycle 1\tCycle 2/1\tCycle 2/2\tCycle 3\tKeyWord 2" +
+                    "\tCycle 1\tCycle 2/1\tCycle 2/2\tCycle 3\tKeyWord 3",
+            "1\t1\t1\t1\t1\t1\t1\t1\t1\t1\t1\t1",
+            "2\t2\t1\t1\t1\t2\t2\t1\t1\t1\t2\t2",
+            "3\t3\t1\t2\t2\t3\t3\t1\t2\t2\t3\t3",
+            "4\t4\t2\t3\t3\t4\t4\t2\t3\t3\t4\t4",
+            "5\t5\t3\t4\t4\t5\t5\tnot found\tnot found\tnot found\tnot found\tnot found",
+            "\tnot found\tnot found\tnot found\tnot found\tnot found\tnot found\tnot found\t3\t4\t4\t5\t5,1"
     };
 
     @Test
-    public void doInBackgroundOk() throws Exception {
-        merger = new ReportMerger(INPUT_FILE_NAMES, RIGHT_MERGE_COL);
+    public void doInBackground_Ok() throws Exception {
+        merger = new ReportMerger(INPUT_FILE_NAMES, RIGHT_MERGE_COL, OUT_FILE_NAME);
         merger.doInBackground();
         merger.done();
         try (BufferedReader br = new BufferedReader(new FileReader(OUT_FILE_NAME))) {
@@ -43,9 +46,9 @@ public class ReportMergerTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void doInBackgroundExc() throws Exception {
+    public void doInBackground_MergeColHasDuplicates() throws Exception {
         try {
-            merger = new ReportMerger(INPUT_FILE_NAMES, WRONG_MERGE_COL);
+            merger = new ReportMerger(INPUT_FILE_NAMES, WRONG_MERGE_COL, OUT_FILE_NAME);
             merger.doInBackground();
         }finally {
             merger.done();

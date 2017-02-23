@@ -19,7 +19,7 @@ public class TxtWriterTest {
     private List<String> cw = Arrays.asList("cw1", "cw2");
     private List<String> kw = Arrays.asList("kw1", "kw2", "kw3");
     private TxtWriter txtWriter;
-    HashMap<String, String> testHM;
+    private HashMap<String, String> testHM;
 
     @Before
     public void setUp() throws Exception {
@@ -45,7 +45,7 @@ public class TxtWriterTest {
         txtWriter.close_buffer();
 
         try (BufferedReader br = new BufferedReader(new FileReader(OUT_FILE_NAME))) {
-            assertEquals("cw1\tcw2\tkw1\tkw2\tkw3\t", br.readLine());
+            assertEquals("cw1\tcw2\tkw1\tkw2\tkw3", br.readLine());
             assertEquals("cwVal\tcwVal\tkwVal\tkwVal\tkwVal", br.readLine());
         } catch (IOException ex) {
             ex.printStackTrace();

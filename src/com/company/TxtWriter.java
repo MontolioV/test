@@ -16,18 +16,16 @@ public class TxtWriter {
     public TxtWriter(List<String> CYCLE_WORDS, List<String> KEY_WORDS, String outputFileName) throws IOException{
         this.CYCLE_WORDS = CYCLE_WORDS;
         this.KEY_WORDS = KEY_WORDS;
+        StringJoiner sj = new StringJoiner("\t");
         try {
             this.buffer = new BufferedWriter(new FileWriter(new File(outputFileName)));
         } catch (IOException e) {
             throw new IOException("Не удалось открыть файл для записи отчета.", e);
         }
         try {
-            for (String s : CYCLE_WORDS) {
-                buffer.write(s + "\t");
-            }
-            for (String s : KEY_WORDS) {
-                buffer.write(s + "\t");
-            }
+            CYCLE_WORDS.forEach(sj::add);
+            KEY_WORDS.forEach(sj::add);
+            buffer.write(sj.toString());
         } catch (IOException e) {
             close_buffer();
             throw new IOException("Не удалось записать шапку в отчет.", e);

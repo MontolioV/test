@@ -40,7 +40,7 @@ public class DataWHTest {
                 new CWwithLvl("Cycle 2/2", 2), new CWwithLvl("Cycle 3", 3));
         dwh = new DataWH(input, output, cws, cWwithLvls, kws);
         String[] expectedVals = new String[]{
-                "Cycle 1\tCycle 2/1\tCycle 2/2\tCycle 3\tKeyWord 1\tKeyWord 2\tKeyWord 3\t",
+                "Cycle 1\tCycle 2/1\tCycle 2/2\tCycle 3\tKeyWord 1\tKeyWord 2\tKeyWord 3",
                 "1\t1\t1\t1\t1\t1\t1",
                 "1\t1\t1\t2\t2\t2\t2",
                 "1\t2\t2\t3\t3\t3\t3",
@@ -49,8 +49,8 @@ public class DataWHTest {
         dwh.doInBackground();
         dwh.done();
         try (BufferedReader br = new BufferedReader(new FileReader(output))) {
-            for (int i = 0; i < expectedVals.length; i++) {
-                assertEquals(expectedVals[i], br.readLine());
+            for (String expectedVal : expectedVals) {
+                assertEquals(expectedVal, br.readLine());
             }
         }
     }
