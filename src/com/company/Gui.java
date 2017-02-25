@@ -1,5 +1,7 @@
 package com.company;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -15,7 +17,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -26,7 +27,8 @@ import java.util.function.Predicate;
 public class Gui {
     private JFrame frame = new JFrame("test");
     private JMenuBar menuBar = new JMenuBar();
-    private JPanel background;
+
+    private JPanel parserPanel;
     private JPanel fieldsPanel;
     private JTabbedPane previewsTabs = new JTabbedPane();
     private File oldPreviewFile;
@@ -36,23 +38,56 @@ public class Gui {
     private ArrayList<KeyWordWithFrequency> frKWs;
     private String inputFileNameAbsolute;
     private JProgressBar progressBar;
-    private JTextField outputFileNameTF;
-    private JButton goParseButton;
+    private JTextField outputFileNameTF = new JTextField("Отчет.txt");
+    private JButton goParseButton = new JButton("Пуск!");
+
+    private JPanel joinerPanel;
+    private JPanel joinFilesPanel;
+    private JTabbedPane previewsTabsJoiner = new JTabbedPane();
+    private ArrayList<JTextField> joinFileNames = new ArrayList<>();
+    private ArrayList<JComboBoxPreset<String>> joinFileWordsCBs = new ArrayList<>();
+    private JProgressBar progressBarJoiner;
+    private JTextField outputFileNameTFJoiner = new JTextField("Отчет.txt");
+    private JButton goJoinButton = new JButton("Пуск!");
 
     public Gui() {
+        makeMenus();
+        makeParserPanel();
+        makeJoinerPanel();
+
+        frame.setJMenuBar(menuBar);
+        frame.getContentPane().add(parserPanel);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setBounds(200, 150, 700, 500);
+        frame.setVisible(true);
+    }
+
+    private void makeMenus() {
         JMenu mainMenu = new JMenu("Файл");
-        JMenuItem menuOpenRepButton = new JMenuItem("Отчет в буфер");
+        JMenuItem menuParserPanelButton = new JMenuItem("Парсер");
+        JMenuItem menuJoinerPanelButton = new JMenuItem("Мерджер");
+        JMenuItem menuCopyRepButton = new JMenuItem("Отчет в буфер");
         JMenuItem menuSaveButton = new JMenuItem("Сохранить");
         JMenuItem menuLoadButton = new JMenuItem("Загрузить");
-        menuOpenRepButton.addActionListener(new CopyReportToClipboardListener());
+
+        menuParserPanelButton.addActionListener(new DisplayParserPaneListener());
+        menuJoinerPanelButton.addActionListener(new DisplayJoinerPanelListener());
+        menuCopyRepButton.addActionListener(new CopyReportToClipboardListener());
         menuSaveButton.addActionListener(new SaveListener());
         menuLoadButton.addActionListener(new LoadListener());
-        mainMenu.add(menuOpenRepButton);
+
+        mainMenu.add(menuParserPanelButton);
+        mainMenu.add(menuJoinerPanelButton);
+        mainMenu.addSeparator();
+        mainMenu.add(menuCopyRepButton);
+        mainMenu.addSeparator();
         mainMenu.add(menuSaveButton);
         mainMenu.add(menuLoadButton);
         menuBar.add(mainMenu);
+    }
 
-        background = new JPanel(new GridBagLayout());
+    private void makeParserPanel() {
+        parserPanel = new JPanel(new GridBagLayout());
 
         JButton chooseFileBut = new JButton("Выбрать текстовый файл " +
                 "(в кодировке " + System.getProperty("file.encoding") + ")");
@@ -73,59 +108,92 @@ public class Gui {
         previewsTabs.addTab("Текущий файл", new JScrollPane(new JTextArea()));
         previewsTabs.addTab("Предыдущий файл", new JScrollPane(new JTextArea()));
 
-        progressBar = new JProgressBar(0,100);
+        progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
         progressBar.setVisible(false);
 
         //ChooseFile
         GridBagConstraints headerGBCons = new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 0,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 0), 0, 20);
-        background.add(chooseFileBut, headerGBCons);
+        parserPanel.add(chooseFileBut, headerGBCons);
 
         //Fields cws title
-        GridBagConstraints fieldsTitleGBCons = new GridBagConstraints(0,2,1,1,0,0,
+        GridBagConstraints fieldsTitleGBCons = new GridBagConstraints(0, 2, 1, 1, 0, 0,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0);
-        background.add(new JLabel("Маркеры циклов"), fieldsTitleGBCons);
+        parserPanel.add(new JLabel("Маркеры циклов"), fieldsTitleGBCons);
 
         //Fields cws
         GridBagConstraints fieldsGBCons = new GridBagConstraints(0, 3, 1, 1, 0, 0,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 10, 0, 10), 0, 0);
-        background.add(fieldsPanel, fieldsGBCons);
+        parserPanel.add(fieldsPanel, fieldsGBCons);
 
         //Fields kws
         GridBagConstraints fieldsAreaGBCons = new GridBagConstraints(0, 4, 1, 1, 0, 1,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 10, 10, 10), 0, 0);
-        background.add(kwListPanel, fieldsAreaGBCons);
+        parserPanel.add(kwListPanel, fieldsAreaGBCons);
 
         //Preview
         GridBagConstraints previewCons = new GridBagConstraints(1, 2, 1, 3, 1, 1,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 10), 0, 0);
-        background.add(previewsTabs, previewCons);
+        parserPanel.add(previewsTabs, previewCons);
 
         //Progress bar
         GridBagConstraints progressBarCons = new GridBagConstraints(0, 5, 2, 1, 1, 0,
                 GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 20, 20), 0, 10);
-        background.add(progressBar, progressBarCons);
+        parserPanel.add(progressBar, progressBarCons);
 
         //Footer
         GridBagConstraints goParseButCons = new GridBagConstraints(0, 6, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 1, 0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 10, 10, 10), 0, 0);
-        background.add(makeFooter(), goParseButCons);
-
-        frame.setJMenuBar(menuBar);
-        frame.getContentPane().add(background);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setBounds(200, 150, 700, 500);
-        frame.setVisible(true);
+        parserPanel.add(makeFooter(goParseButton, new GoParseActionListener(), outputFileNameTF), goParseButCons);
     }
 
-    private JPanel makeFooter() {
+    private void makeJoinerPanel() {
+        joinerPanel = new JPanel(new GridBagLayout());
+
+        JButton chooseReportButton = new JButton("Добавить отчет для объединения");
+        chooseReportButton.addActionListener(new OpenForJoinerListener());
+
+        joinFilesPanel = new JPanel(new GridBagLayout());
+        remakeJoinFilesPanel();
+
+        previewsTabsJoiner.addTab("Текущий файл", new JScrollPane(new JTextArea()));
+        previewsTabsJoiner.addTab("Предыдущий файл", new JScrollPane(new JTextArea()));
+
+        progressBarJoiner = new JProgressBar(0, 100);
+        progressBarJoiner.setStringPainted(true);
+        progressBarJoiner.setVisible(false);
+
+        //Header, file chooser
+        GridBagConstraints consHeader = new GridBagConstraints(0, 0, GridBagConstraints.REMAINDER, 1, 1, 0,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 10, 0), 0, 20);
+        joinerPanel.add(chooseReportButton, consHeader);
+
+        //Reports panel
+        GridBagConstraints consFilePanel = new GridBagConstraints(0, 1, 1, 1, 1, 0,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 10, 10), 0, 0);
+        joinerPanel.add(joinFilesPanel, consFilePanel);
+
+        //Preview
+        GridBagConstraints consPreview = new GridBagConstraints(0, 2, 1, 1, 1, 1,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 10, 10, 10), 0, 0);
+        joinerPanel.add(previewsTabsJoiner, consPreview);
+
+        //Progress bar
+        GridBagConstraints progressBarCons = new GridBagConstraints(0, 3, 1, 1, 1, 0,
+                GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 20, 20), 0, 10);
+        joinerPanel.add(progressBarJoiner, progressBarCons);
+
+        //Footer, start button
+        GridBagConstraints footerCons = new GridBagConstraints(0, 4, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 1, 0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 10, 10, 10), 0, 0);
+        joinerPanel.add(makeFooter(goJoinButton, new GoJoinActionListener(), outputFileNameTFJoiner), footerCons);
+    }
+
+    private JPanel makeFooter(JButton startButton, ActionListener actionListener, JTextField outputTF) {
         JPanel result = new JPanel(new GridBagLayout());
 
-        goParseButton = new JButton("Пуск!");
-        goParseButton.addActionListener(new GoParseActionListener());
-
-        outputFileNameTF = new JTextField("Отчет.txt");
+        startButton.addActionListener(actionListener);
 
         //Label
         GridBagConstraints labelCons = new GridBagConstraints(0, 0, 1, 1, 0, 0,
@@ -135,19 +203,19 @@ public class Gui {
         //Output file name field
         GridBagConstraints textFieldCons = new GridBagConstraints(0, 1, 1, 1, 0.6, 0,
                 GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 10);
-        result.add(outputFileNameTF, textFieldCons);
+        result.add(outputTF, textFieldCons);
 
         //Start button
         GridBagConstraints startButtonCons = new GridBagConstraints(1, 0, 1, 2, 0.4, 1,
                 GridBagConstraints.LINE_START, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
-        result.add(goParseButton, startButtonCons);
+        result.add(startButton, startButtonCons);
 
         return result;
     }
 
     private void fillGuiFromFile(File file) {
         DefaultListModel<String> listModel = new DefaultListModel<String>();
-        updatePreview(file);
+        updatePreview(file, previewsTabs);
         frKWs = findKWs(file);
 
         for (JComboBox<String> cb : cwJCBs) {
@@ -164,15 +232,15 @@ public class Gui {
         frame.revalidate();
     }
 
-    private void updatePreview(File file) {
-        JScrollPane oldPreview = (JScrollPane) previewsTabs.getComponentAt(0);
+    private void updatePreview(File file, JTabbedPane prTabs) {
+        JScrollPane oldPreview = (JScrollPane) prTabs.getComponentAt(0);
         JScrollPane newPreview = makePreview(file);
 
         if (file.equals(oldPreviewFile)) {
-            previewsTabs.setComponentAt(0, newPreview);
+            prTabs.setComponentAt(0, newPreview);
         } else {
-            previewsTabs.setComponentAt(0, newPreview);
-            previewsTabs.setComponentAt(1, oldPreview);
+            prTabs.setComponentAt(0, newPreview);
+            prTabs.setComponentAt(1, oldPreview);
             oldPreviewFile = file;
         }
     }
@@ -200,7 +268,7 @@ public class Gui {
             showWarningMessage("Превью не заполнено. Не получается найти файл.", e);
         } catch (IOException e) {
             showWarningMessage("При заполнении превью возникло исключение.", e);
-        }finally {
+        } finally {
             try {
                 if (bReader != null) bReader.close();
             } catch (IOException e) {
@@ -237,6 +305,28 @@ public class Gui {
 
         fieldsPanel.add(defaultSpinner, spinnerConstraints);
         fieldsPanel.add(defaultComboBox, comboBoxConstraints);
+    }
+
+    private void remakeJoinFilesPanel() {
+        joinFilesPanel.removeAll();
+
+        GridBagConstraints consTFLabel = new GridBagConstraints(0, 0, 1, 1, 0, 0,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0);
+        joinFilesPanel.add(new Label("Файл с отчетом"), consTFLabel);
+        GridBagConstraints consCBLabel = new GridBagConstraints(1, 0, 1, 1, 0, 0,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+        joinFilesPanel.add(new Label("Общая колонка"), consCBLabel);
+
+        for (int i = 0; i < joinFileNames.size(); i++) {
+            GridBagConstraints consTF = new GridBagConstraints(0, i + 1, 1, 1, 1, 0,
+                    GridBagConstraints.FIRST_LINE_START, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 3, 5), 0, 0);
+            joinFilesPanel.add(joinFileNames.get(i), consTF);
+            GridBagConstraints consCB = new GridBagConstraints(1, i + 1, 1, 1, 0, 0,
+                    GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 0), 0, 0);
+            joinFilesPanel.add(joinFileWordsCBs.get(i), consCB);
+        }
+
+        frame.revalidate();
     }
 
     private ArrayList<KeyWordWithFrequency> findKWs(File file) {
@@ -284,7 +374,7 @@ public class Gui {
     }
 
     private JFileChooser makeSerialisFChooser() throws SecurityException {
-        Path saveDir = Paths.get("","Saves").toAbsolutePath();
+        Path saveDir = Paths.get("", "Saves").toAbsolutePath();
         if (!saveDir.toFile().exists()) {
             if (!saveDir.toFile().mkdir()) {
                 throw new SecurityException("Не удалось создать папку Saves. Недостаточно прав.");
@@ -292,13 +382,13 @@ public class Gui {
         }
 
         JFileChooser fileChooser = new JFileChooser(saveDir.toFile());
-        fileChooser.setFileFilter(new FileNameExtensionFilter(".ser","ser"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter(".ser", "ser"));
         fileChooser.setAcceptAllFileFilterUsed(false);
 
         return fileChooser;
     }
 
-    private void showWarningMessage(String  message) {
+    private void showWarningMessage(String message) {
         showWarningMessage(message, null);
     }
 
@@ -320,21 +410,71 @@ public class Gui {
                 "Возникла проблема", JOptionPane.WARNING_MESSAGE);
     }
 
+    private class DisplayParserPaneListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            frame.setContentPane(parserPanel);
+            frame.revalidate();
+        }
+    }
+
+    private class DisplayJoinerPanelListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            frame.setContentPane(joinerPanel);
+            frame.revalidate();
+        }
+    }
+
     private class OpenListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
+            doSmthWithFile(chooseFile());
+        }
+
+        private void doSmthWithFile(File selectedFile) {
+            if (selectedFile != null) {
+                fillGuiFromFile(selectedFile);
+                inputFileNameAbsolute = selectedFile.toString();
+            }
+        }
+
+        @Nullable
+        private File chooseFile() {
             Path currentDir = Paths.get("").toAbsolutePath();
             JFileChooser fileChooser = new JFileChooser(currentDir.toFile());
-            fileChooser.setFileFilter(new FileNameExtensionFilter(".txt","txt"));
+            fileChooser.setFileFilter(new FileNameExtensionFilter(".txt", "txt"));
             fileChooser.setAcceptAllFileFilterUsed(false);
             int response = fileChooser.showDialog(frame, null);
 
             if (response == JFileChooser.APPROVE_OPTION) {
                 if (fileChooser.getSelectedFile().exists()) {
-                    fillGuiFromFile(fileChooser.getSelectedFile());
-                    inputFileNameAbsolute = fileChooser.getSelectedFile().toString();
+                    return fileChooser.getSelectedFile();
                 } else {
                     showWarningMessage(new IllegalArgumentException("Нет такого файла!"));
+                }
+            }
+            return null;
+        }
+    }
+
+    private class OpenForJoinerListener extends OpenListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            doSmthWithFile(super.chooseFile());
+        }
+
+        private void doSmthWithFile(File selectedFile) {
+            if (selectedFile != null) {
+                try (BufferedReader br = new BufferedReader(new FileReader(selectedFile))) {
+                    JComboBoxPreset<String> tmpCB = new JComboBoxPreset<>(br.readLine().split("\t"));
+                    joinFileNames.add(new JTextField(selectedFile.toString()));
+                    joinFileWordsCBs.add(tmpCB);
+                    updatePreview(selectedFile, previewsTabsJoiner);
+
+                    remakeJoinFilesPanel();
+                } catch (IOException e) {
+                    showWarningMessage(e);
                 }
             }
         }
@@ -349,7 +489,7 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
-            try (BufferedReader br = new BufferedReader(new FileReader(outputFileNameTF.getText()))){
+            try (BufferedReader br = new BufferedReader(new FileReader(outputFileNameTF.getText()))) {
                 StringJoiner joiner = new StringJoiner("\n");
                 Predicate<String> addLine = (line) -> {
                     if (line != null) {
@@ -515,20 +655,26 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
-//            if (cwJCBs.size() < 10) {
-                String s = (String) cwJCBs.get(cwJCBs.size() - 1).getSelectedItem();
-                if ((s != null) && (!s.equals(""))) {
-                    addField();
+            boolean emptyFieldExists = false;
+            String s;
+            for (JComboBox<String> cb : cwJCBs) {
+                s = (String) cb.getSelectedItem();
+                if ((s == null) || (s.equals(""))) {
+                    emptyFieldExists = true;
+                    break;
                 }
-
+            }
+            if (!emptyFieldExists) {
+                addField();
                 frame.revalidate();
-//            }
+            }
         }
     }
 
     private class GoParseActionListener implements ActionListener {
         private boolean isRunning;
         private DataWH dwh;
+
         /**
          * Invoked when an action occurs.
          *
@@ -569,7 +715,7 @@ public class Gui {
 
             if (outputFileName == null || outputFileName.equals("")) {
                 throw new IllegalArgumentException("Файл для отчета должен как-то называться.");
-            } else if (!outputFileName.endsWith(".txt")){
+            } else if (!outputFileName.endsWith(".txt")) {
                 outputFileName += ".txt";
             }
 
@@ -584,7 +730,7 @@ public class Gui {
                 throw new IllegalArgumentException("Нельзя парсить без ключевых слов.");
             } else {
                 dwh = new DataWH(inputFileNameAbsolute, outputFileName,
-                                        cws, cwsLvl, kwsJList.getSelectedValuesList());
+                        cws, cwsLvl, kwsJList.getSelectedValuesList());
                 String finalOutputFileName = outputFileName;
                 dwh.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
@@ -604,7 +750,7 @@ public class Gui {
                                     case DONE:
                                         try {
                                             dwh.get();
-                                            updatePreview(new File(finalOutputFileName));
+                                            updatePreview(new File(finalOutputFileName), previewsTabs);
                                         } catch (InterruptedException e1) {
                                             showWarningMessage("InterruptedException", e1);
                                         } catch (ExecutionException e2) {
@@ -634,6 +780,83 @@ public class Gui {
             dwh.cancel(true);
         }
     }
+
+    private class GoJoinActionListener implements ActionListener {
+        private boolean isRunning;
+        private ReportMerger merger;
+
+        @Override
+
+        public void actionPerformed(ActionEvent e) {
+            try {
+                if (isRunning) {
+                    cancel();
+                } else {
+                    prepareAndGo();
+                }
+            } catch (IllegalArgumentException e1) {
+                showWarningMessage(e1);
+            }
+        }
+
+        private void prepareAndGo() throws IllegalArgumentException {
+            String output = outputFileNameTFJoiner.getText();
+            ArrayList<String> reports = new ArrayList<>();
+            ArrayList<Integer> mergeWordIndexes = new ArrayList<>();
+            String finalOutputFileName = outputFileNameTFJoiner.getText();
+
+            joinFileNames.forEach((tf) -> reports.add(tf.getText()));
+            joinFileWordsCBs.forEach((cb) -> mergeWordIndexes.add(cb.getSelectedIndex()));
+
+            merger = new ReportMerger(reports.toArray(new String[0]), mergeWordIndexes.stream().mapToInt(Integer::intValue).toArray(), output);
+            merger.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent event) {
+                    switch (event.getPropertyName()) {
+                        case "state":
+                            switch ((SwingWorker.StateValue) event.getNewValue()) {
+                                case PENDING:
+                                    break;
+                                case STARTED:
+                                    isRunning = true;
+                                    progressBarJoiner.setValue(0);
+                                    progressBarJoiner.setVisible(true);
+                                    progressBarJoiner.setIndeterminate(true);
+                                    goJoinButton.setText("Отмена");
+                                    break;
+                                case DONE:
+                                    try {
+                                        merger.get();
+                                        updatePreview(new File(finalOutputFileName), previewsTabsJoiner);
+                                    } catch (InterruptedException e1) {
+                                        showWarningMessage("InterruptedException", e1);
+                                    } catch (ExecutionException e2) {
+                                        showWarningMessage((Exception) e2.getCause());
+                                    } catch (CancellationException e3) {
+                                        showWarningMessage("Отменено", e3);
+                                    }
+                                    progressBarJoiner.setVisible(false);
+                                    isRunning = false;
+                                    goJoinButton.setText("Пуск!");
+                                    break;
+                            }
+                            break;
+                        case "progress":
+                            progressBarJoiner.setIndeterminate(false);
+                            progressBarJoiner.setValue((Integer) event.getNewValue());
+                            break;
+                    }
+                }
+            });
+
+            merger.execute();
+        }
+
+        private void cancel() {
+            merger.cancel(true);
+        }
+    }
+
 }
 
 /**

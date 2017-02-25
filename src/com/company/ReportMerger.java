@@ -60,6 +60,7 @@ public class ReportMerger extends SwingWorker<Integer, String> {
             while (processedLines < totalLines) {
                 bw.newLine();
                 bw.write(merge());
+                setProgress(progress.apply(processedLines));
             }
         }
 
@@ -115,7 +116,8 @@ public class ReportMerger extends SwingWorker<Integer, String> {
                     throw new IllegalArgumentException("Колонка, выбранная связующей, содержит" +
                             " повторяющиеся значения.\nПравилькое слияние не получится. " +
                             "Однозначно сопоставить можно только уникальные идентификаторы.\n" +
-                            "Файл:\n" + fileName);
+                            "Значение: " + tmpArr[mergeIndex] + "\n" +
+                            "Файл: " + fileName);
                 }
                 tmpArr = txtReader.getArrayFromTxt();
                 setProgress(progress.apply(++processedLines));
