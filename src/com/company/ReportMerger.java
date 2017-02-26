@@ -16,6 +16,8 @@ public class ReportMerger extends SwingWorker<Integer, String> {
     private final int[] MERGE_WORD_I;
     private ArrayList<String[]> headers = new ArrayList<>();
     private ArrayList<List<String[]>> sortedListsOfValArrs;
+    private ArrayList<boolean[]> processedValsIndicatorList = new ArrayList<>();
+    private int keyPosition;
     private long totalLines;
     private long processedLines;
     private Function<Long, Integer> progress;
@@ -60,7 +62,7 @@ public class ReportMerger extends SwingWorker<Integer, String> {
             while (processedLines < totalLines) {
                 bw.newLine();
                 bw.write(merge());
-                setProgress(progress.apply(processedLines));
+//                setProgress(progress.apply(processedLines));
             }
         }
 
@@ -101,7 +103,8 @@ public class ReportMerger extends SwingWorker<Integer, String> {
         Comparator<String[]> comparator = (ar1, ar2) -> ar1[mergeIndex].compareTo(ar2[mergeIndex]);
 
         String[] tmpArr;
-        List<String[]> result = new LinkedList<>();
+//        List<String[]> result = new LinkedList<>();
+        List<String[]> result = new ArrayList<>();
         HashSet<String> uniqDetector = new HashSet<>();
         TxtReader txtReader = new TxtReader(fileName);
 
@@ -130,6 +133,7 @@ public class ReportMerger extends SwingWorker<Integer, String> {
             throw new IllegalArgumentException("Файл не содержит значений.\n" + fileName);
         }
         Collections.sort(result, comparator);
+        processedValsIndicatorList.add(new boolean[result.size()]);
         return result;
     }
 
@@ -139,22 +143,38 @@ public class ReportMerger extends SwingWorker<Integer, String> {
         int keyIndex = -1;
 
         for (int i = 0; i < sortedListsOfValArrs.size(); i++) {
+            List<String[]> list = sortedListsOfValArrs.get(i);
+            if (!list.isEmpty()) {
+                if (!allValsInListProcessed(list)) {
+                    boolean b = processedValsIndicatorList.get(i)[keyPosition];
+                    while (keyPosition < list.size() && processedValsIndicatorList.get(i)[keyPosition]) {
+                        keyPosition++;
+                    }
+                    if (!allValsInListProcessed(list)) break;
+                }
+            }
+        }
+
+        for (int i = 0; i < sortedListsOfValArrs.size(); i++) {
             if (sortedListsOfValArrs.get(i).isEmpty()) {
                 addNotFound(result, headers.get(i).length);
             } else {
                 if (key == null) {
-                    key = sortedListsOfValArrs.get(i).get(0);
+                    key = sortedListsOfValArrs.get(i).get(keyPosition);
                     keyIndex = MERGE_WORD_I[i];
 
-                    addFound(result, sortedListsOfValArrs.get(i).get(0));
-                    sortedListsOfValArrs.get(i).remove(0);
+                    addFound(result, sortedListsOfValArrs.get(i).get(keyPosition));
+//                    sortedListsOfValArrs.get(i).remove(0);
+                    processedValsIndicatorList.get(i)[keyPosition] = true;
+                    keyPosition++;
                 } else {
                     int matchIndex = findInList(key, keyIndex, i);
-                    if (matchIndex < 0) {
+                    if (matchIndex < 0 || processedValsIndicatorList.get(i)[matchIndex]) {
                         addNotFound(result, headers.get(i).length);
                     } else {
                         addFound(result, sortedListsOfValArrs.get(i).get(matchIndex));
-                        sortedListsOfValArrs.get(i).remove(matchIndex);
+//                        sortedListsOfValArrs.get(i).remove(matchIndex);
+                        processedValsIndicatorList.get(i)[matchIndex] = true;
                     }
                 }
             }
@@ -182,8 +202,22 @@ public class ReportMerger extends SwingWorker<Integer, String> {
 
     private int findInList(String[] key, int keyMergeI, int listIndex) {
         Comparator<String[]> comparator = (sArrCollec, sArrKey) ->
-                sArrCollec[MERGE_WORD_I[listIndex]].compareTo(sArrKey[MERGE_WORD_I[keyMergeI]]);
+                sArrCollec[MERGE_WORD_I[listIndex]].compareTo(sArrKey[keyMergeI]);
 
         return Collections.binarySearch(sortedListsOfValArrs.get(listIndex), key, comparator);
+    }
+
+    /**
+     * If all values have been processed, the list will be emptied and keyPosition will be set to 0.
+     * @param list to check.
+     * @return true, if all values have been processed. Otherwise - false.
+     */
+    private boolean allValsInListProcessed(List<String[]> list) {
+        if (keyPosition >= list.size()) {
+            list.clear();
+            keyPosition = 0;
+            return true;
+        }
+        return false;
     }
 }

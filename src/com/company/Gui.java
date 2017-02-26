@@ -310,8 +310,8 @@ public class Gui {
     private void remakeJoinFilesPanel() {
         joinFilesPanel.removeAll();
 
-        GridBagConstraints consTFLabel = new GridBagConstraints(0, 0, 1, 1, 0, 0,
-                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0);
+        GridBagConstraints consTFLabel = new GridBagConstraints(0, 0, 1, 1, 1, 0,
+                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0);
         joinFilesPanel.add(new Label("Файл с отчетом"), consTFLabel);
         GridBagConstraints consCBLabel = new GridBagConstraints(1, 0, 1, 1, 0, 0,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);

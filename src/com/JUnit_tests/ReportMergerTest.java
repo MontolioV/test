@@ -30,7 +30,7 @@ public class ReportMergerTest {
             "3\t3\t1\t2\t2\t3\t3\t1\t2\t2\t3\t3",
             "4\t4\t2\t3\t3\t4\t4\t2\t3\t3\t4\t4",
             "5\t5\t3\t4\t4\t5\t5\tnot found\tnot found\tnot found\tnot found\tnot found",
-            "\tnot found\tnot found\tnot found\tnot found\tnot found\tnot found\tnot found\t3\t4\t4\t5\t5,1"
+            "not found\tnot found\tnot found\tnot found\tnot found\tnot found\tnot found\t3\t4\t4\t5\t5,1"
     };
 
     @Test
@@ -39,8 +39,9 @@ public class ReportMergerTest {
         merger.doInBackground();
         merger.done();
         try (BufferedReader br = new BufferedReader(new FileReader(OUT_FILE_NAME))) {
-            for (int j = 0; j < 6; j++) {
-                assertEquals(GOOD_RESULT[j], br.readLine());
+            String s;
+            for (int j = 0; (s = br.readLine()) != null; j++) {
+                assertEquals(GOOD_RESULT[j], s);
             }
         }
     }
