@@ -76,6 +76,12 @@ public class Gui {
         menuSaveButton.addActionListener(new SaveListener());
         menuLoadButton.addActionListener(new LoadListener());
 
+        menuParserPanelButton.setAccelerator(KeyStroke.getKeyStroke((char) KeyEvent.VK_1));
+        menuJoinerPanelButton.setAccelerator(KeyStroke.getKeyStroke((char) KeyEvent.VK_2));
+        menuCopyRepButton.setAccelerator(KeyStroke.getKeyStroke((char) KeyEvent.VK_3));
+        menuSaveButton.setAccelerator(KeyStroke.getKeyStroke((char) KeyEvent.VK_4));
+        menuLoadButton.setAccelerator(KeyStroke.getKeyStroke((char) KeyEvent.VK_5));
+
         mainMenu.add(menuParserPanelButton);
         mainMenu.add(menuJoinerPanelButton);
         mainMenu.addSeparator();

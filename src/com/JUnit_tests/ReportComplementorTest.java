@@ -1,28 +1,31 @@
 package com.JUnit_tests;
 
-import com.company.ReportMerger;
+import com.company.ReportComplementor;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileReader;
-import java.io.FileWriter;
 
 import static org.junit.Assert.*;
 
 /**
- * <p>Created by MontolioV on 22.02.17.
+ * <p>Created by MontolioV on 27.02.17.
  */
-public class ReportMergerTest {
-    private ReportMerger merger;
+public class ReportComplementorTest {
+    private ReportComplementor complementor;
     private final String OUT_FILE_NAME = "unit_test_txt/Unit_test_output.txt";
-    private final String[] INPUT_FILE_NAMES = {
-            "unit_test_txt/Unit_test_merge1.txt",
+    private final String[] INPUT_FILE_NAMES_RIGHT = {
+            "unit_test_txt/Unit_test_complementor1.txt",
             "unit_test_txt/Unit_test_merge2.txt",
             "unit_test_txt/Unit_test_merge3.txt"
     };
-    private final int[] RIGHT_MERGE_COL = {0, 4, 4};
-    private final int[] WRONG_MERGE_COL = {0, 0, 0};
+    private final String[] INPUT_FILE_NAMES_WRONG = {
+            "unit_test_txt/Unit_test_merge1.txt",
+            "unit_test_txt/Unit_test_complementor1.txt"
+    };
+    private final int[] MERGE_COL_RIGHT = {0, 4, 4};
+    private final int[] MERGE_COL_WRONG = {0, 0};
     private final String[] GOOD_RESULT = {
             "KeyWord 1\tKeyWord 2" +
                     "\tCycle 1\tCycle 2/1\tCycle 2/2\tCycle 3\tKeyWord 2" +
@@ -32,14 +35,15 @@ public class ReportMergerTest {
             "3\t3\t1\t2\t2\t3\t3\t1\t2\t2\t3\t3",
             "4\t4\t2\t3\t3\t4\t4\t2\t3\t3\t4\t4",
             "5\t5\t3\t4\t4\t5\t5\tnot found\tnot found\tnot found\tnot found\tnot found",
-            "not found\tnot found\tnot found\tnot found\tnot found\tnot found\tnot found\t3\t4\t4\t5\t5,1"
+            "5\t5\t3\t4\t4\t5\t5\tnot found\tnot found\tnot found\tnot found\tnot found"
     };
 
+//    @Ignore
     @Test
-    public void doInBackground_Ok() throws Exception {
-        merger = new ReportMerger(INPUT_FILE_NAMES, RIGHT_MERGE_COL, OUT_FILE_NAME);
-        merger.doInBackground();
-        merger.done();
+    public void doInBackground_OK() throws Exception {
+        complementor = new ReportComplementor(INPUT_FILE_NAMES_RIGHT, MERGE_COL_RIGHT, OUT_FILE_NAME);
+        complementor.doInBackground();
+        complementor.done();
         try (BufferedReader br = new BufferedReader(new FileReader(OUT_FILE_NAME))) {
             String s;
             for (int j = 0; (s = br.readLine()) != null; j++) {
@@ -48,13 +52,14 @@ public class ReportMergerTest {
         }
     }
 
+//    @Ignore
     @Test(expected = IllegalArgumentException.class)
-    public void doInBackground_MergeColHasDuplicates() throws Exception {
+    public void doInBackground_Ambiguity() throws Exception {
         try {
-            merger = new ReportMerger(INPUT_FILE_NAMES, WRONG_MERGE_COL, OUT_FILE_NAME);
-            merger.doInBackground();
+            complementor = new ReportComplementor(INPUT_FILE_NAMES_WRONG, MERGE_COL_WRONG, OUT_FILE_NAME);
+            complementor.doInBackground();
         } finally {
-            merger.done();
+            complementor.done();
         }
     }
 }

@@ -15,7 +15,7 @@ public class ReportMerger extends SwingWorker<Integer, String> {
     private final String OUTPUT_FILE_NAMES;
     private final int[] MERGE_WORD_I;
     private ArrayList<String[]> headers = new ArrayList<>();
-    private ArrayList<List<String[]>> sortedListsOfValArrs;
+    private ArrayList<List<String[]>> sortedListsOfValArrs= new ArrayList<>();
     private ArrayList<boolean[]> processedValsIndicatorList = new ArrayList<>();
     private int keyPosition;
     private long totalLines;
@@ -43,31 +43,37 @@ public class ReportMerger extends SwingWorker<Integer, String> {
      */
     @Override
     public Integer doInBackground() throws Exception {
-        totalLines = calcLines();
-        sortedListsOfValArrs = new ArrayList<>();
+        calcLines();
         StringJoiner sj = new StringJoiner("\t");
 
-        for (int i = 0; i < INPUT_FILE_NAMES.length; i++) {
-            sortedListsOfValArrs.add(makeSortedList(INPUT_FILE_NAMES[i], MERGE_WORD_I[i]));
-        }
+        prepareLists();
 
         for (String[] sArr : headers) {
             for (String s : sArr) {
                 sj.add(s);
             }
-            processedLines++;
+            processedLinesIncr();
         }
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(OUTPUT_FILE_NAMES))) {
             bw.write(sj.toString());
-            while (processedLines < totalLines) {
-                bw.newLine();
-                bw.write(merge());
-//                setProgress(progress.apply(processedLines));
-            }
+            writeResult(bw);
         }
 
-
         return 0;
+    }
+
+    protected void prepareLists() throws IOException {
+        for (int i = 0; i < INPUT_FILE_NAMES.length; i++) {
+            sortedListsOfValArrs.add(makeList(INPUT_FILE_NAMES[i], MERGE_WORD_I[i], true, true));
+        }
+    }
+
+    protected void writeResult(BufferedWriter bw) throws IOException {
+        while (processedLines < totalLines) {
+            bw.newLine();
+            bw.write(merge());
+            updProgress();
+        }
     }
 
     /**
@@ -88,22 +94,19 @@ public class ReportMerger extends SwingWorker<Integer, String> {
         System.out.println("totalLines: " + totalLines + "\nprocessedLines: " + processedLines);
     }
 
-    private long calcLines() throws IOException {
+    private void calcLines() throws IOException {
         long result = 0;
         for (String fName : INPUT_FILE_NAMES) {
             try (BufferedReader br = new BufferedReader(new FileReader(fName))) {
                 result += br.lines().count();
             }
         }
-        return result * 2;
+        totalLines = result * 2;
     }
 
-    private List<String[]> makeSortedList(String fileName, int mergeIndex)
+    List<String[]> makeList(String fileName, int mergeIndex, boolean onlyUniq, boolean sorted)
                                           throws IllegalArgumentException, IOException {
-        Comparator<String[]> comparator = (ar1, ar2) -> ar1[mergeIndex].compareTo(ar2[mergeIndex]);
-
         String[] tmpArr;
-//        List<String[]> result = new LinkedList<>();
         List<String[]> result = new ArrayList<>();
         HashSet<String> uniqDetector = new HashSet<>();
         TxtReader txtReader = new TxtReader(fileName);
@@ -115,12 +118,14 @@ public class ReportMerger extends SwingWorker<Integer, String> {
             tmpArr = txtReader.getArrayFromTxt();
             while (tmpArr != null) {
                 result.add(tmpArr);
-                if (!uniqDetector.add(tmpArr[mergeIndex])) {
-                    throw new IllegalArgumentException("Колонка, выбранная связующей, содержит" +
-                            " повторяющиеся значения.\nПравилькое слияние не получится. " +
-                            "Однозначно сопоставить можно только уникальные идентификаторы.\n" +
-                            "Значение: " + tmpArr[mergeIndex] + "\n" +
-                            "Файл: " + fileName);
+                if (onlyUniq) {
+                    if (!uniqDetector.add(tmpArr[mergeIndex])) {
+                        throw new IllegalArgumentException("Колонка, выбранная связующей, содержит" +
+                                " повторяющиеся значения.\nПравилькое слияние не получится. " +
+                                "Однозначно сопоставить можно только уникальные идентификаторы.\n" +
+                                "Значение: " + tmpArr[mergeIndex] + "\n" +
+                                "Файл: " + fileName);
+                    }
                 }
                 tmpArr = txtReader.getArrayFromTxt();
                 setProgress(progress.apply(++processedLines));
@@ -132,9 +137,19 @@ public class ReportMerger extends SwingWorker<Integer, String> {
         if (result.isEmpty()) {
             throw new IllegalArgumentException("Файл не содержит значений.\n" + fileName);
         }
-        Collections.sort(result, comparator);
+
+        if (sorted) {
+            sortList(result, mergeIndex);
+        }
+
         processedValsIndicatorList.add(new boolean[result.size()]);
         return result;
+    }
+
+    private List<String[]> sortList(List<String[]> list, int mergeIndex) {
+        Comparator<String[]> comparator = (ar1, ar2) -> ar1[mergeIndex].compareTo(ar2[mergeIndex]);
+        Collections.sort(list, comparator);
+        return list;
     }
 
     private String merge() {
@@ -164,16 +179,14 @@ public class ReportMerger extends SwingWorker<Integer, String> {
                     keyIndex = MERGE_WORD_I[i];
 
                     addFound(result, sortedListsOfValArrs.get(i).get(keyPosition));
-//                    sortedListsOfValArrs.get(i).remove(0);
                     processedValsIndicatorList.get(i)[keyPosition] = true;
                     keyPosition++;
                 } else {
-                    int matchIndex = findInList(key, keyIndex, i);
+                    int matchIndex = findInList(sortedListsOfValArrs.get(i), key, keyIndex, i);
                     if (matchIndex < 0 || processedValsIndicatorList.get(i)[matchIndex]) {
                         addNotFound(result, headers.get(i).length);
                     } else {
                         addFound(result, sortedListsOfValArrs.get(i).get(matchIndex));
-//                        sortedListsOfValArrs.get(i).remove(matchIndex);
                         processedValsIndicatorList.get(i)[matchIndex] = true;
                     }
                 }
@@ -187,24 +200,24 @@ public class ReportMerger extends SwingWorker<Integer, String> {
         return result.toString();
     }
 
-    private void addNotFound(StringJoiner sj, int size) {
+    void addNotFound(StringJoiner sj, int size) {
         for (int i = 0; i < size; i++) {
             sj.add("not found");
         }
     }
 
-    private void addFound(StringJoiner sj, String[] sArr) {
+    void addFound(StringJoiner sj, String[] sArr) {
         for (String s : sArr) {
             sj.add(s);
         }
         processedLines++;
     }
 
-    private int findInList(String[] key, int keyMergeI, int listIndex) {
+    int findInList(List<String[]> list,String[] key, int keyMergeI, int listIndex) {
         Comparator<String[]> comparator = (sArrCollec, sArrKey) ->
                 sArrCollec[MERGE_WORD_I[listIndex]].compareTo(sArrKey[keyMergeI]);
 
-        return Collections.binarySearch(sortedListsOfValArrs.get(listIndex), key, comparator);
+        return Collections.binarySearch(list, key, comparator);
     }
 
     /**
@@ -219,5 +232,13 @@ public class ReportMerger extends SwingWorker<Integer, String> {
             return true;
         }
         return false;
+    }
+
+    void processedLinesIncr() {
+        processedLines++;
+    }
+
+    void updProgress() {
+        setProgress(progress.apply(processedLines));
     }
 }
