@@ -35,8 +35,11 @@ public class TxtReader {
         try {
             String s = this.buffer.readLine();
             if (s != null){
-                if (s.endsWith("\t")) {                 /* To prevent last data cell lost, if it was empty */
+                // To prevent last data cell lost, if cell was empty.
+                if (s.endsWith("\t")) {
                     s = s + "\tend";
+                    String[] sArr = s.split("\t");
+                    return Arrays.copyOf(sArr, sArr.length - 1);
                 }
                 return s.split("\t");
             }else {

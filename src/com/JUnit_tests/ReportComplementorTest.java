@@ -34,8 +34,8 @@ public class ReportComplementorTest {
             "2\t2\t1\t1\t1\t2\t2\t1\t1\t1\t2\t2",
             "3\t3\t1\t2\t2\t3\t3\t1\t2\t2\t3\t3",
             "4\t4\t2\t3\t3\t4\t4\t2\t3\t3\t4\t4",
-            "5\t5\t3\t4\t4\t5\t5\tnot found\tnot found\tnot found\tnot found\tnot found",
-            "5\t5\t3\t4\t4\t5\t5\tnot found\tnot found\tnot found\tnot found\tnot found"
+            "5\t5\t3\t4\t4\t5\t5\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!",
+            "5\t5\t3\t4\t4\t5\t5\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!"
     };
 
 //    @Ignore

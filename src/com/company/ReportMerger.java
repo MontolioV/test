@@ -202,7 +202,7 @@ public class ReportMerger extends SwingWorker<Integer, String> {
 
     void addNotFound(StringJoiner sj, int size) {
         for (int i = 0; i < size; i++) {
-            sj.add("not found");
+            sj.add("NOT FOUND!");
         }
     }
 

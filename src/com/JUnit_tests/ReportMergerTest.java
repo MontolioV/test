@@ -31,8 +31,8 @@ public class ReportMergerTest {
             "2\t2\t1\t1\t1\t2\t2\t1\t1\t1\t2\t2",
             "3\t3\t1\t2\t2\t3\t3\t1\t2\t2\t3\t3",
             "4\t4\t2\t3\t3\t4\t4\t2\t3\t3\t4\t4",
-            "5\t5\t3\t4\t4\t5\t5\tnot found\tnot found\tnot found\tnot found\tnot found",
-            "not found\tnot found\tnot found\tnot found\tnot found\tnot found\tnot found\t3\t4\t4\t5\t5,1"
+            "5\t5\t3\t4\t4\t5\t5\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!",
+            "NOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\t3\t4\t4\t5\t5,1"
     };
 
     @Test

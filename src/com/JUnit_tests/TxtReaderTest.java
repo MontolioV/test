@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 
 import com.company.TxtReader;
 
+import java.util.Arrays;
+
 /**
  * JUnit test for TxtReader class.
  * <p></p>
@@ -12,7 +14,7 @@ import com.company.TxtReader;
  */
 public class TxtReaderTest {
     private TxtReader txtReader;
-    private final String[] line5 = {"KeyWord 1", "1", "KeyWord 2", "1", "", "end"};
+    private final String[] line5 = {"KeyWord 1", "1", "KeyWord 2", "1", ""};
 
     @Before
     public void setUp() throws Exception {
@@ -31,7 +33,7 @@ public class TxtReaderTest {
         for (String s : txtReader.getListFromTxt()) {
             assertNotNull(s);
         }
-        assertEquals(5, txtReader.getListFromTxt().size());
+        assertEquals(4, txtReader.getListFromTxt().size());
         txtReader.getListFromTxt();
         assertArrayEquals(line5, txtReader.getListFromTxt().toArray());
     }
@@ -42,7 +44,7 @@ public class TxtReaderTest {
         for (String s : txtReader.getArrayFromTxt()) {
             assertNotNull(s);
         }
-        assertEquals(5, txtReader.getArrayFromTxt().length);
+        assertEquals(4, txtReader.getArrayFromTxt().length);
         txtReader.getArrayFromTxt();
         assertArrayEquals(line5, txtReader.getArrayFromTxt());
     }

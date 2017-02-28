@@ -27,6 +27,7 @@ import java.util.function.Predicate;
 public class Gui {
     private JFrame frame = new JFrame("test");
     private JMenuBar menuBar = new JMenuBar();
+    String lastReportFile = "Отчет.txt";
 
     private JPanel parserPanel;
     private JPanel fieldsPanel;
@@ -42,13 +43,14 @@ public class Gui {
     private JButton goParseButton = new JButton("Пуск!");
 
     private JPanel joinerPanel;
-    private JPanel joinFilesPanel;
+    private JPanel joinFilesPanel = new JPanel(new GridBagLayout());
     private JTabbedPane previewsTabsJoiner = new JTabbedPane();
     private ArrayList<JTextField> joinFileNames = new ArrayList<>();
     private ArrayList<JComboBoxPreset<String>> joinFileWordsCBs = new ArrayList<>();
     private JProgressBar progressBarJoiner;
     private JTextField outputFileNameTFJoiner = new JTextField("Отчет.txt");
     private JButton goJoinButton = new JButton("Пуск!");
+    private JoinerMode joinerMode = JoinerMode.COMPLEMENTOR;
 
     public Gui() {
         makeMenus();
@@ -160,11 +162,24 @@ public class Gui {
         JButton chooseReportButton = new JButton("Добавить отчет для объединения");
         chooseReportButton.addActionListener(new OpenForJoinerListener());
 
-        joinFilesPanel = new JPanel(new GridBagLayout());
         remakeJoinFilesPanel();
 
         previewsTabsJoiner.addTab("Текущий файл", new JScrollPane(new JTextArea()));
         previewsTabsJoiner.addTab("Предыдущий файл", new JScrollPane(new JTextArea()));
+
+        JRadioButton selectMerger = new JRadioButton("Слить все отчеты, как равнозначные. Без потерь.");
+        selectMerger.setActionCommand("merger");
+        selectMerger.addActionListener(new ChooseJoinerMode());
+        JRadioButton selectComplementor = new JRadioButton("Присоединить к первому отчету остальные.", true);
+        selectComplementor.setActionCommand("complementor");
+        selectComplementor.addActionListener(new ChooseJoinerMode());
+
+        ButtonGroup selectJoinerGroop = new ButtonGroup();
+        selectJoinerGroop.add(selectComplementor);
+        selectJoinerGroop.add(selectMerger);
+        JPanel selectJoinerPanel = new JPanel(new GridLayout(2, 0));
+        selectJoinerPanel.add(selectComplementor);
+        selectJoinerPanel.add(selectMerger);
 
         progressBarJoiner = new JProgressBar(0, 100);
         progressBarJoiner.setStringPainted(true);
@@ -185,13 +200,18 @@ public class Gui {
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(0, 10, 10, 10), 0, 0);
         joinerPanel.add(previewsTabsJoiner, consPreview);
 
+        //Joiner mode selection
+        GridBagConstraints selectCons = new GridBagConstraints(0, 3, 1, 1, 1, 0,
+                GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 20, 20), 0, 10);
+        joinerPanel.add(selectJoinerPanel, selectCons);
+
         //Progress bar
-        GridBagConstraints progressBarCons = new GridBagConstraints(0, 3, 1, 1, 1, 0,
+        GridBagConstraints progressBarCons = new GridBagConstraints(0, 4, 1, 1, 1, 0,
                 GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 20, 20, 20), 0, 10);
         joinerPanel.add(progressBarJoiner, progressBarCons);
 
         //Footer, start button
-        GridBagConstraints footerCons = new GridBagConstraints(0, 4, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 1, 0,
+        GridBagConstraints footerCons = new GridBagConstraints(0, 5, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER, 1, 0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 10, 10, 10), 0, 0);
         joinerPanel.add(makeFooter(goJoinButton, new GoJoinActionListener(), outputFileNameTFJoiner), footerCons);
     }
@@ -316,19 +336,27 @@ public class Gui {
     private void remakeJoinFilesPanel() {
         joinFilesPanel.removeAll();
 
-        GridBagConstraints consTFLabel = new GridBagConstraints(0, 0, 1, 1, 1, 0,
-                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0);
-        joinFilesPanel.add(new Label("Файл с отчетом"), consTFLabel);
-        GridBagConstraints consCBLabel = new GridBagConstraints(1, 0, 1, 1, 0, 0,
-                GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-        joinFilesPanel.add(new Label("Общая колонка"), consCBLabel);
+        if (joinFileNames.size() > 0) {
+            JButton reset = new JButton("Сброс");
+            reset.addActionListener(new ClearJoinFilesPanel());
+
+            GridBagConstraints consTFLabel = new GridBagConstraints(0, 0, 1, 1, 1, 0,
+                    GridBagConstraints.FIRST_LINE_START, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0);
+            joinFilesPanel.add(new JLabel("Файл с отчетом"), consTFLabel);
+            GridBagConstraints consCBLabel = new GridBagConstraints(1, 0, 1, 1, 0, 0,
+                    GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+            joinFilesPanel.add(new JLabel("Общая колонка"), consCBLabel);
+            GridBagConstraints resetButtonCons = new GridBagConstraints(3, 1, 1, joinFileNames.size(), 0, 1,
+                    GridBagConstraints.FIRST_LINE_START, GridBagConstraints.VERTICAL, new Insets(3, 10, 0, 0), 0, 0);
+            joinFilesPanel.add(reset, resetButtonCons);
+        }
 
         for (int i = 0; i < joinFileNames.size(); i++) {
-            GridBagConstraints consTF = new GridBagConstraints(0, i + 1, 1, 1, 1, 0,
-                    GridBagConstraints.FIRST_LINE_START, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 3, 5), 0, 0);
+            GridBagConstraints consTF = new GridBagConstraints(0, i + 1, 1, 1, 1, 1,
+                    GridBagConstraints.FIRST_LINE_START, GridBagConstraints.BOTH, new Insets(3, 0, 0, 5), 0, 0);
             joinFilesPanel.add(joinFileNames.get(i), consTF);
-            GridBagConstraints consCB = new GridBagConstraints(1, i + 1, 1, 1, 0, 0,
-                    GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 0), 0, 0);
+            GridBagConstraints consCB = new GridBagConstraints(1, i + 1, 1, 1, 0, 1,
+                    GridBagConstraints.FIRST_LINE_START, GridBagConstraints.VERTICAL, new Insets(3, 0, 0, 0), 0, 0);
             joinFilesPanel.add(joinFileWordsCBs.get(i), consCB);
         }
 
@@ -495,7 +523,7 @@ public class Gui {
          */
         @Override
         public void actionPerformed(ActionEvent e) {
-            try (BufferedReader br = new BufferedReader(new FileReader(outputFileNameTF.getText()))) {
+            try (BufferedReader br = new BufferedReader(new FileReader(lastReportFile))) {
                 StringJoiner joiner = new StringJoiner("\n");
                 Predicate<String> addLine = (line) -> {
                     if (line != null) {
@@ -677,6 +705,31 @@ public class Gui {
         }
     }
 
+    private class ClearJoinFilesPanel implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            joinFileNames = new ArrayList<>();
+            joinFileWordsCBs = new ArrayList<>();
+            remakeJoinFilesPanel();
+        }
+    }
+
+    private class ChooseJoinerMode implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            switch (e.getActionCommand()) {
+                case "merger":
+                    joinerMode = JoinerMode.MERGER;
+                    break;
+                case "complementor":
+                    joinerMode = JoinerMode.COMPLEMENTOR;
+                    break;
+            }
+        }
+    }
+
     private class GoParseActionListener implements ActionListener {
         private boolean isRunning;
         private DataWH dwh;
@@ -767,6 +820,7 @@ public class Gui {
                                         progressBar.setVisible(false);
                                         isRunning = false;
                                         goParseButton.setText("Пуск!");
+                                        lastReportFile = outputFileNameTF.getText();
                                         break;
                                 }
                                 break;
@@ -789,7 +843,7 @@ public class Gui {
 
     private class GoJoinActionListener implements ActionListener {
         private boolean isRunning;
-        private ReportMerger merger;
+        private ReportMerger joiner;
 
         @Override
 
@@ -809,13 +863,25 @@ public class Gui {
             String output = outputFileNameTFJoiner.getText();
             ArrayList<String> reports = new ArrayList<>();
             ArrayList<Integer> mergeWordIndexes = new ArrayList<>();
-            String finalOutputFileName = outputFileNameTFJoiner.getText();
 
             joinFileNames.forEach((tf) -> reports.add(tf.getText()));
             joinFileWordsCBs.forEach((cb) -> mergeWordIndexes.add(cb.getSelectedIndex()));
 
-            merger = new ReportMerger(reports.toArray(new String[0]), mergeWordIndexes.stream().mapToInt(Integer::intValue).toArray(), output);
-            merger.addPropertyChangeListener(new PropertyChangeListener() {
+            if (reports.size() < 2 || mergeWordIndexes.size() < 2) {
+                throw new IllegalArgumentException("Выберите не менее двух отчетов для слияния.");
+            }
+
+            switch (joinerMode) {
+
+                case MERGER:
+                    joiner = new ReportMerger(reports.toArray(new String[0]), mergeWordIndexes.stream().mapToInt(Integer::intValue).toArray(), output);
+                    break;
+                case COMPLEMENTOR:
+                    joiner = new ReportComplementor(reports.toArray(new String[0]), mergeWordIndexes.stream().mapToInt(Integer::intValue).toArray(), output);
+                    break;
+            }
+
+            joiner.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent event) {
                     switch (event.getPropertyName()) {
@@ -832,8 +898,8 @@ public class Gui {
                                     break;
                                 case DONE:
                                     try {
-                                        merger.get();
-                                        updatePreview(new File(finalOutputFileName), previewsTabsJoiner);
+                                        joiner.get();
+                                        updatePreview(new File(output), previewsTabsJoiner);
                                     } catch (InterruptedException e1) {
                                         showWarningMessage("InterruptedException", e1);
                                     } catch (ExecutionException e2) {
@@ -844,6 +910,7 @@ public class Gui {
                                     progressBarJoiner.setVisible(false);
                                     isRunning = false;
                                     goJoinButton.setText("Пуск!");
+                                    lastReportFile = outputFileNameTFJoiner.getText();
                                     break;
                             }
                             break;
@@ -855,11 +922,11 @@ public class Gui {
                 }
             });
 
-            merger.execute();
+            joiner.execute();
         }
 
         private void cancel() {
-            merger.cancel(true);
+            joiner.cancel(true);
         }
     }
 
@@ -901,4 +968,8 @@ class JComboBoxPreset<E> extends JComboBox<E> {
         super.setPreferredSize(new Dimension(200, 20));
     }
 
+}
+
+enum JoinerMode {
+    MERGER, COMPLEMENTOR,;
 }
