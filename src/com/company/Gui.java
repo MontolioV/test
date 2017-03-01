@@ -25,7 +25,7 @@ import java.util.function.Predicate;
  * Created by MontolioV on 20.12.16.
  */
 public class Gui {
-    private JFrame frame = new JFrame("test");
+    private JFrame frame = new JFrame("Обработка отчетов");
     private JMenuBar menuBar = new JMenuBar();
     String lastReportFile = "Отчет.txt";
 
@@ -128,7 +128,7 @@ public class Gui {
         //Fields cws title
         GridBagConstraints fieldsTitleGBCons = new GridBagConstraints(0, 2, 1, 1, 0, 0,
                 GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0);
-        parserPanel.add(new JLabel("Маркеры циклов"), fieldsTitleGBCons);
+        parserPanel.add(new JLabel("Маркеры циклов и их вложенность"), fieldsTitleGBCons);
 
         //Fields cws
         GridBagConstraints fieldsGBCons = new GridBagConstraints(0, 3, 1, 1, 0, 0,
@@ -312,10 +312,10 @@ public class Gui {
         JSpinner defaultSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1));
         JComboBox<String> defaultComboBox = new JComboBoxPreset<>();
 
-        GridBagConstraints comboBoxConstraints = new GridBagConstraints(0, gridY, 1, 1, 0, 0,
-                GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 10), 0, 0);
-        GridBagConstraints spinnerConstraints = new GridBagConstraints(1, gridY, 1, 1, 0, 0,
-                GridBagConstraints.LINE_START, GridBagConstraints.NONE, new Insets(0, 0, 3, 0), 0, 0);
+        GridBagConstraints comboBoxConstraints = new GridBagConstraints(0, gridY, 1, 1, 0, 1,
+                GridBagConstraints.LINE_START, GridBagConstraints.VERTICAL, new Insets(0, 0, 3, 10), 0, 0);
+        GridBagConstraints spinnerConstraints = new GridBagConstraints(1, gridY, 1, 1, 0, 1,
+                GridBagConstraints.LINE_START, GridBagConstraints.VERTICAL, new Insets(0, 0, 3, 0), 0, 0);
 
         defaultComboBox.setEditable(true);
         cwJCBs.add(defaultComboBox);
@@ -533,8 +533,7 @@ public class Gui {
                     return false;
                 };
 
-                while (addLine.test(br.readLine())) {
-                }
+                while (addLine.test(br.readLine())) ;
 
                 Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
                 Transferable textToCB = new StringSelection(joiner.toString());
@@ -773,8 +772,10 @@ public class Gui {
             }
 
             if (outputFileName == null || outputFileName.equals("")) {
+                outputFileNameTF.setText("Отчет.txt");
                 throw new IllegalArgumentException("Файл для отчета должен как-то называться.");
             } else if (!outputFileName.endsWith(".txt")) {
+                outputFileNameTF.setText(outputFileNameTF.getText() + ".txt");
                 outputFileName += ".txt";
             }
 
@@ -860,6 +861,13 @@ public class Gui {
         }
 
         private void prepareAndGo() throws IllegalArgumentException {
+            if (outputFileNameTFJoiner.getText().equals("")) {
+                outputFileNameTFJoiner.setText("Отчет.txt");
+                throw new IllegalArgumentException("Файл для отчета должен как-то называться.");
+            } else if (!outputFileNameTFJoiner.getText().endsWith(".txt")) {
+                outputFileNameTFJoiner.setText(outputFileNameTFJoiner.getText() + ".txt");
+            }
+
             String output = outputFileNameTFJoiner.getText();
             ArrayList<String> reports = new ArrayList<>();
             ArrayList<Integer> mergeWordIndexes = new ArrayList<>();
