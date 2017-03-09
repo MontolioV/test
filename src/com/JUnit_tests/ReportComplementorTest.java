@@ -1,7 +1,6 @@
 package com.JUnit_tests;
 
 import com.company.ReportComplementor;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -38,7 +37,6 @@ public class ReportComplementorTest {
             "5\t5\t3\t4\t4\t5\t5\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!\tNOT FOUND!"
     };
 
-//    @Ignore
     @Test
     public void doInBackground_OK() throws Exception {
         complementor = new ReportComplementor(INPUT_FILE_NAMES_RIGHT, MERGE_COL_RIGHT, OUT_FILE_NAME);
@@ -52,7 +50,6 @@ public class ReportComplementorTest {
         }
     }
 
-//    @Ignore
     @Test(expected = IllegalArgumentException.class)
     public void doInBackground_Ambiguity() throws Exception {
         try {

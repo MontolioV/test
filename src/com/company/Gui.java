@@ -27,7 +27,7 @@ import java.util.function.Predicate;
 public class Gui {
     private JFrame frame = new JFrame("Обработка отчетов");
     private JMenuBar menuBar = new JMenuBar();
-    String lastReportFile = "Отчет.txt";
+    private String lastReportFile = "Отчет.txt";
 
     private JPanel parserPanel;
     private JPanel fieldsPanel;
@@ -62,6 +62,12 @@ public class Gui {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setBounds(200, 150, 700, 500);
         frame.setVisible(true);
+
+        //For Linux
+        String jarPath = System.getProperty("java.class.path");
+        if (jarPath.split(":").length < 3) {
+            System.setProperty("user.dir", jarPath);
+        }
     }
 
     private void makeMenus() {
@@ -431,7 +437,7 @@ public class Gui {
     }
 
     private void showWarningMessage(String message, Exception e) {
-        e.printStackTrace();
+        if (e != null) e.printStackTrace();
 
         StringJoiner stringJoiner = new StringJoiner("\n");
         if (message != null && !message.equals("")) stringJoiner.add(message);

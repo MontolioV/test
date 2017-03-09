@@ -14,6 +14,7 @@ public class ReportMerger extends SwingWorker<Integer, String> {
     private final String[] INPUT_FILE_NAMES;
     private final String OUTPUT_FILE_NAMES;
     private final int[] MERGE_WORD_I;
+    private long[] linesInFile;
     private ArrayList<String[]> headers = new ArrayList<>();
     private ArrayList<List<String[]>> sortedListsOfValArrs= new ArrayList<>();
     private ArrayList<boolean[]> processedValsIndicatorList = new ArrayList<>();
@@ -26,6 +27,7 @@ public class ReportMerger extends SwingWorker<Integer, String> {
         INPUT_FILE_NAMES = repNames;
         MERGE_WORD_I = mergeWordIndexes;
         OUTPUT_FILE_NAMES = output;
+        linesInFile = new long[INPUT_FILE_NAMES.length];
         progress = (lines) -> (int) (((double) lines / totalLines) * 100);
     }
 
@@ -64,7 +66,7 @@ public class ReportMerger extends SwingWorker<Integer, String> {
 
     protected void prepareLists() throws IOException {
         for (int i = 0; i < INPUT_FILE_NAMES.length; i++) {
-            sortedListsOfValArrs.add(makeList(INPUT_FILE_NAMES[i], MERGE_WORD_I[i], true, true));
+            sortedListsOfValArrs.add(makeList(i, true, true));
         }
     }
 
@@ -96,26 +98,31 @@ public class ReportMerger extends SwingWorker<Integer, String> {
 
     private void calcLines() throws IOException {
         long result = 0;
-        for (String fName : INPUT_FILE_NAMES) {
+        for (int i = 0, input_file_namesLength = INPUT_FILE_NAMES.length; i < input_file_namesLength; i++) {
+            String fName = INPUT_FILE_NAMES[i];
             try (BufferedReader br = new BufferedReader(new FileReader(fName))) {
-                result += br.lines().count();
+                linesInFile[i] = br.lines().count();
+                result += linesInFile[i];
             }
         }
         totalLines = result * 2;
     }
 
-    List<String[]> makeList(String fileName, int mergeIndex, boolean onlyUniq, boolean sorted)
+    List<String[]> makeList(int fileIdx, boolean onlyUniq, boolean sorted)
                                           throws IllegalArgumentException, IOException {
-        String[] tmpArr;
-        List<String[]> result = new ArrayList<>();
-        HashSet<String> uniqDetector = new HashSet<>();
+        String fileName = INPUT_FILE_NAMES[fileIdx];
+        int mergeIndex = MERGE_WORD_I[fileIdx];
+        int alSize = (int) (linesInFile[fileIdx] - 1);
+        ArrayList<String[]> result = new ArrayList<>(alSize);
         TxtReader txtReader = new TxtReader(fileName);
 
         try {
+            HashSet<String> uniqDetector = new HashSet<>();
+
             headers.add(txtReader.getArrayFromTxt());
             processedLines++;
 
-            tmpArr = txtReader.getArrayFromTxt();
+            String[] tmpArr = txtReader.getArrayFromTxt();
             while (tmpArr != null) {
                 result.add(tmpArr);
                 if (onlyUniq) {
