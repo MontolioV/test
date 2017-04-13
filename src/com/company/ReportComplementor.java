@@ -22,7 +22,7 @@ public class ReportComplementor extends ReportMerger {
     }
 
     @Override
-    protected void prepareLists() throws IOException {
+    protected void prepareLists() throws IOException, InterruptedException {
         mainList = makeList(0, false, false);
         for (int i = 1; i < INPUT_FILE_NAMES.length; i++) {
             sortedListsOfValArrs.add(makeList(i, true, true));
@@ -30,11 +30,12 @@ public class ReportComplementor extends ReportMerger {
     }
 
     @Override
-    protected void writeResult(BufferedWriter bw) throws IOException {
+    protected void writeResult(BufferedWriter bw) throws IOException, InterruptedException {
         for (String[] sArr : mainList) {
             bw.newLine();
             bw.write(complement(sArr));
             updProgress();
+            checkIfInterrupted();
         }
     }
 

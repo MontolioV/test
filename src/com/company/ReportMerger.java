@@ -10,7 +10,7 @@ import java.util.function.Function;
  * To merge them.
  * <p>Created by MontolioV on 22.02.17.
  */
-public class ReportMerger extends SwingWorker<Integer, String> {
+public class ReportMerger extends SwingWorkerTemplate {
     private final String[] INPUT_FILE_NAMES;
     private final String OUTPUT_FILE_NAMES;
     private final int[] MERGE_WORD_I;
@@ -64,17 +64,18 @@ public class ReportMerger extends SwingWorker<Integer, String> {
         return 0;
     }
 
-    protected void prepareLists() throws IOException {
+    protected void prepareLists() throws IOException, InterruptedException {
         for (int i = 0; i < INPUT_FILE_NAMES.length; i++) {
             sortedListsOfValArrs.add(makeList(i, true, true));
         }
     }
 
-    protected void writeResult(BufferedWriter bw) throws IOException {
+    protected void writeResult(BufferedWriter bw) throws IOException, InterruptedException {
         while (processedLines < totalLines) {
             bw.newLine();
             bw.write(merge());
             updProgress();
+            checkIfInterrupted();
         }
     }
 
@@ -109,7 +110,10 @@ public class ReportMerger extends SwingWorker<Integer, String> {
     }
 
     List<String[]> makeList(int fileIdx, boolean onlyUniq, boolean sorted)
-                                          throws IllegalArgumentException, IOException {
+            throws IllegalArgumentException, IOException, InterruptedException {
+
+        checkIfInterrupted();
+
         String fileName = INPUT_FILE_NAMES[fileIdx];
         int mergeIndex = MERGE_WORD_I[fileIdx];
         int alSize = (int) (linesInFile[fileIdx] - 1);

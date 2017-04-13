@@ -10,7 +10,7 @@ import java.io.*;
  * Created by MontolioV on 10.12.2016.
  */
 
-public class DataWH extends SwingWorker<Integer, String> {
+public class DataWH extends SwingWorkerTemplate{
     private final String INPUT_FILE_NAME;
     private final String OUTPUT_FILE_NAME;
     private final List<String> CYCLE_WORDS;
@@ -50,6 +50,7 @@ public class DataWH extends SwingWorker<Integer, String> {
             while (unfinished) {
                 try {
                     unfinished = makeHT(reader.getListFromTxt());
+                    checkIfInterrupted();
                 } catch (ArrayIndexOutOfBoundsException e) {
                     throw new IllegalArgumentException("Проверте структуру файла и ключевые слова.\n" +
                             "За ключевым словом должно следовать соответствующее значение, " +
@@ -77,7 +78,7 @@ public class DataWH extends SwingWorker<Integer, String> {
      * Analysis of file structure. If it is unappropriated an exception will be thrown.
      * <p></p>
      */
-    private void fileAnalise() throws IOException, IllegalArgumentException {
+    private void fileAnalise() throws IOException, IllegalArgumentException, InterruptedException {
         String mainCycle = Collections.min(CYCLE_WORDS_LVL).getCw();
         LinkedList<String> unfoundCWs = new LinkedList<>(CYCLE_WORDS);
         LinkedList<String> unfoundKWs = new LinkedList<>(KEY_WORDS);
@@ -106,6 +107,7 @@ public class DataWH extends SwingWorker<Integer, String> {
                 }
 
                 tmpList = txtReader.getListFromTxt();
+                checkIfInterrupted();
             } while (tmpList != null && !tmpList.contains(mainCycle));
         }finally {
             txtReader.close_buffer();
