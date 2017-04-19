@@ -25,6 +25,7 @@ import java.util.function.Predicate;
  * Created by MontolioV on 20.12.16.
  */
 public class Gui {
+    private Path workDir;
     private JFrame frame = new JFrame("Обработка отчетов");
     private JMenuBar menuBar = new JMenuBar();
     private String lastReportFile = "Отчет.txt";
@@ -63,10 +64,12 @@ public class Gui {
         frame.setBounds(200, 150, 700, 500);
         frame.setVisible(true);
 
-        //For Linux
-        String jarPath = System.getProperty("java.class.path");
-        if (jarPath.split(":").length < 3) {
-            System.setProperty("user.dir", jarPath);
+        //Working directory. Reports, saves etc. will be stored there.
+        String jarStr = System.getProperty("java.class.path");
+        if (jarStr.split(":").length < 3) {
+            workDir = Paths.get(jarStr).getParent();
+        } else {
+            workDir = Paths.get("");
         }
     }
 
@@ -414,9 +417,11 @@ public class Gui {
     }
 
     private JFileChooser makeSerialisFChooser() throws SecurityException {
-        Path saveDir = Paths.get("", "Saves").toAbsolutePath();
+        Path saveDir = workDir.resolve("Saves");
         if (!saveDir.toFile().exists()) {
             if (!saveDir.toFile().mkdir()) {
+                showWarningMessage("Не удалось создать папку Saves. Недостаточно прав.\n" +
+                                    saveDir.toString());
                 throw new SecurityException("Не удалось создать папку Saves. Недостаточно прав.");
             }
         }
@@ -481,8 +486,7 @@ public class Gui {
 
         @Nullable
         private File chooseFile() {
-            Path currentDir = Paths.get("").toAbsolutePath();
-            JFileChooser fileChooser = new JFileChooser(currentDir.toFile());
+            JFileChooser fileChooser = new JFileChooser(workDir.toFile());
             fileChooser.setFileFilter(new FileNameExtensionFilter(".txt", "txt"));
             fileChooser.setAcceptAllFileFilterUsed(false);
             int response = fileChooser.showDialog(frame, null);
