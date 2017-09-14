@@ -40,8 +40,12 @@ public class ReportComplementorTest {
     @Test
     public void doInBackground_OK() throws Exception {
         complementor = new ReportComplementor(INPUT_FILE_NAMES_RIGHT, MERGE_COL_RIGHT, OUT_FILE_NAME);
+
+        assertEquals(0, complementor.getProgress());
         complementor.doInBackground();
         complementor.done();
+        assertEquals(100, complementor.getProgress());
+
         try (BufferedReader br = new BufferedReader(new FileReader(OUT_FILE_NAME))) {
             String s;
             for (int j = 0; (s = br.readLine()) != null; j++) {

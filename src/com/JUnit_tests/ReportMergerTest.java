@@ -36,8 +36,12 @@ public class ReportMergerTest {
     @Test
     public void doInBackground_Ok() throws Exception {
         merger = new ReportMerger(INPUT_FILE_NAMES, RIGHT_MERGE_COL, OUT_FILE_NAME);
+
+        assertEquals(0, merger.getProgress());
         merger.doInBackground();
         merger.done();
+        assertEquals(100, merger.getProgress());
+
         try (BufferedReader br = new BufferedReader(new FileReader(OUT_FILE_NAME))) {
             String s;
             for (int j = 0; (s = br.readLine()) != null; j++) {

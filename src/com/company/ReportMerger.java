@@ -1,6 +1,5 @@
 package com.company;
 
-import javax.swing.*;
 import java.io.*;
 import java.util.*;
 import java.util.function.Function;
@@ -98,6 +97,10 @@ public class ReportMerger extends SwingWorkerTemplate {
     }
 
     private void calcLines() throws IOException {
+        totalLines = calcTotalWork();
+    }
+
+    protected long calcTotalWork() throws IOException {
         long result = 0;
         for (int i = 0, input_file_namesLength = INPUT_FILE_NAMES.length; i < input_file_namesLength; i++) {
             String fName = INPUT_FILE_NAMES[i];
@@ -106,7 +109,7 @@ public class ReportMerger extends SwingWorkerTemplate {
                 result += linesInFile[i];
             }
         }
-        totalLines = result * 2;
+        return result * 2;
     }
 
     List<String[]> makeList(int fileIdx, boolean onlyUniq, boolean sorted)
@@ -124,7 +127,7 @@ public class ReportMerger extends SwingWorkerTemplate {
             HashSet<String> uniqDetector = new HashSet<>();
 
             headers.add(txtReader.getArrayFromTxt());
-            processedLines++;
+            processedLinesIncr();
 
             String[] tmpArr = txtReader.getArrayFromTxt();
             while (tmpArr != null) {
@@ -139,7 +142,8 @@ public class ReportMerger extends SwingWorkerTemplate {
                     }
                 }
                 tmpArr = txtReader.getArrayFromTxt();
-                setProgress(progress.apply(++processedLines));
+                processedLinesIncr();
+                updProgress();
             }
         }finally {
             txtReader.close_buffer();
@@ -189,6 +193,7 @@ public class ReportMerger extends SwingWorkerTemplate {
                     key = sortedListsOfValArrs.get(i).get(keyPosition);
                     keyIndex = MERGE_WORD_I[i];
 
+                    processedLinesIncr();
                     addFound(result, sortedListsOfValArrs.get(i).get(keyPosition));
                     processedValsIndicatorList.get(i)[keyPosition] = true;
                     keyPosition++;
@@ -197,6 +202,7 @@ public class ReportMerger extends SwingWorkerTemplate {
                     if (matchIndex < 0 || processedValsIndicatorList.get(i)[matchIndex]) {
                         addNotFound(result, headers.get(i).length);
                     } else {
+                        processedLinesIncr();
                         addFound(result, sortedListsOfValArrs.get(i).get(matchIndex));
                         processedValsIndicatorList.get(i)[matchIndex] = true;
                     }
@@ -221,7 +227,6 @@ public class ReportMerger extends SwingWorkerTemplate {
         for (String s : sArr) {
             sj.add(s);
         }
-        processedLines++;
     }
 
     int findInList(List<String[]> list,String[] key, int keyMergeI, int listIndex) {

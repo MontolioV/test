@@ -1,6 +1,8 @@
 package com.company;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,21 @@ public class ReportComplementor extends ReportMerger {
         super(repNames, mergeWordIndexes, output);
         INPUT_FILE_NAMES = repNames;
         MERGE_WORD_I = mergeWordIndexes;
+    }
+
+    @Override
+    protected long calcTotalWork() throws IOException {
+        long result;
+        long superPart = super.calcTotalWork();
+        try (BufferedReader br = new BufferedReader(new FileReader(INPUT_FILE_NAMES[0]))) {
+            result = br.lines().count();
+        }
+        result *= 2;
+        superPart -= result;
+        superPart /= 2;
+        result += superPart;
+        result += INPUT_FILE_NAMES.length - 1;
+        return result;
     }
 
     @Override
@@ -43,6 +60,7 @@ public class ReportComplementor extends ReportMerger {
         StringJoiner result = new StringJoiner("\t");
         int index;
 
+        processedLinesIncr();
         addFound(result, mainLine);
         for (int i = 0; i < sortedListsOfValArrs.size(); i++) {
             int listIdxForMergeW = i + 1;
